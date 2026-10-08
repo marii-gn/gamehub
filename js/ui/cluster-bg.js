@@ -7,6 +7,7 @@ export class ClusterBgAnimation {
     this.animId = null;
     this.isRunning = false;
     this.gridSpacing = 50;
+    this.showCubes = false; // Кубики літають лише якщо true (у режимі "Код Чотирьох")
 
     this.handleResize = this.resize.bind(this);
   }
@@ -15,6 +16,7 @@ export class ClusterBgAnimation {
     if (!this.canvas) return;
     this.resize();
     window.addEventListener("resize", this.handleResize);
+    this.start();
   }
 
   resize() {
@@ -40,18 +42,19 @@ export class ClusterBgAnimation {
     }
   }
 
+  setCubesMode(enable) {
+    this.showCubes = enable;
+  }
+
   start() {
     if (this.isRunning || !this.canvas) return;
     this.isRunning = true;
-    this.canvas.classList.remove("hidden");
-    this.resize();
     this.loop();
   }
 
   stop() {
     this.isRunning = false;
     if (this.animId) cancelAnimationFrame(this.animId);
-    if (this.canvas) this.canvas.classList.add("hidden");
   }
 
   loop() {
@@ -64,7 +67,7 @@ export class ClusterBgAnimation {
     const { ctx, canvas, clusters } = this;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. Цифрова матрична сітка
+    // 1. Постійна фонова сітка для всіх сторінок
     ctx.strokeStyle = "rgba(192, 132, 252, 0.04)";
     ctx.lineWidth = 1;
     for (let x = 0; x < canvas.width; x += this.gridSpacing) {
@@ -80,24 +83,26 @@ export class ClusterBgAnimation {
       ctx.stroke();
     }
 
-    // 2. Плаваючі модульні кластери
-    clusters.forEach(c => {
-      c.y -= c.speed;
-      c.angle += c.rotSpeed;
-      if (c.y < -50) c.y = canvas.height + 50;
+    // 2. Літаючі кубики (малюються виключно в режимі "Код Чотирьох")
+    if (this.showCubes) {
+      clusters.forEach(c => {
+        c.y -= c.speed;
+        c.angle += c.rotSpeed;
+        if (c.y < -50) c.y = canvas.height + 50;
 
-      ctx.save();
-      ctx.translate(c.x, c.y);
-      ctx.rotate(c.angle);
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate(c.angle);
 
-      ctx.strokeStyle = `rgba(192, 132, 252, ${c.alpha})`;
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(-c.size / 2, -c.size / 2, c.size, c.size);
+        ctx.strokeStyle = `rgba(192, 132, 252, ${c.alpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(-c.size / 2, -c.size / 2, c.size, c.size);
 
-      ctx.fillStyle = `rgba(56, 189, 248, ${c.alpha * 1.5})`;
-      ctx.fillRect(-2, -2, 4, 4);
+        ctx.fillStyle = `rgba(56, 189, 248, ${c.alpha * 1.5})`;
+        ctx.fillRect(-2, -2, 4, 4);
 
-      ctx.restore();
-    });
+        ctx.restore();
+      });
+    }
   }
 }

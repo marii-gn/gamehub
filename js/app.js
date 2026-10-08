@@ -31,7 +31,7 @@ class App {
   init() {
     this.bgCloud.init();
     this.bgConstellation.init();
-    this.bgCluster.init();
+    this.bgCluster.init(); // Сітка активна постійно на фоні
 
     this.initUserSession();
     this.initDragAndDrop();
@@ -55,7 +55,8 @@ class App {
 
   stopAllBackgrounds() {
     this.bgConstellation.stop();
-    this.bgCluster.stop();
+    // Вимикаємо політ кубиків для всіх інших екранів (залишається лише сітка)
+    this.bgCluster.setCubesMode(false);
   }
 
   openHub() {
@@ -84,8 +85,9 @@ class App {
 
   openConnections() {
     this.stopAllBackgrounds();
+    // Вмикаємо літаючі кубики ТІЛЬКИ в режимі «Код Чотирьох»
+    this.bgCluster.setCubesMode(true);
     this.view.showScreen("connections");
-    this.bgCluster.start();
     this.connEngine.startNewGame();
     this.view.hideConnHint();
     this.view.renderConnectionsBoard(this.connEngine);
@@ -152,7 +154,7 @@ class App {
     });
 
     const handlePeekStart = (e) => {
-      if (this.catEngine.mode === "solo") return; // Блокуємо будь-яке підглядання в соло
+      if (this.catEngine.mode === "solo") return;
       if (e.type === "touchstart") e.preventDefault();
       const current = this.catEngine.getCurrentPlayerCategory();
       if (current) this.view.showVaultCategory(`Секретна умова: Гравець ${this.catEngine.currentPlayer}`, current.text);

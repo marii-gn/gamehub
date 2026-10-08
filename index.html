@@ -15,10 +15,10 @@
 </head>
 <body>
 
-  <!-- ФОНОВІ ЕФЕКТИ -->
+  <!-- ФОНОВІ ЕФЕКТИ (Сітка активна завжди) -->
+  <canvas class="cluster-bg" id="clusterBg"></canvas>
   <div class="word-cloud-bg" id="wordCloud"></div>
   <canvas class="constellation-bg hidden" id="constellationBg"></canvas>
-  <canvas class="cluster-bg hidden" id="clusterBg"></canvas>
 
   <!-- ВЕРХНЯ НАВІГАЦІЙНА ПАНЕЛЬ -->
   <header class="top-nav-bar" id="topNavBar">
@@ -40,7 +40,6 @@
   <!-- ==================== ЕКРАН 1: ГОЛОВНЕ МЕНЮ ==================== -->
   <section class="game-hub-container" id="hubScreen">
     <div class="hub-header">
-      <div class="hub-tag">Cyber Terminal // Gaming Platform</div>
       <h1 class="hub-title">Ігровий Хаб</h1>
       <p class="hub-subtitle">Обирайте лінгвістичний режим, тренуйте логіку та встановлюйте рекорди</p>
     </div>
@@ -159,7 +158,6 @@
     <section class="module-plate chain-panel">
       <header class="chain-header">
         <div>
-          <div class="hub-tag">Словосполучення</div>
           <h2 class="chain-title">Ланцюг Слів</h2>
         </div>
         <div class="chain-score-cluster">
@@ -191,7 +189,6 @@
     <section class="module-plate conn-panel">
       <header class="conn-header">
         <div>
-          <div class="hub-tag">Кібер-Кластери // 4 x 4</div>
           <h2 class="conn-title">Код Чотирьох</h2>
         </div>
         <div class="conn-lives-cluster" id="connLivesCluster">
@@ -223,7 +220,7 @@
         </div>
       </div>
 
-      <!-- Фінальна панель після закінчення та показу повного розв'язку -->
+      <!-- Фінальна панель після закінчення -->
       <div class="conn-finish-controls hidden" id="connFinishControls">
         <button class="physical-btn btn-connections-accent conn-finish-btn" id="btnNextCode">Наступний Код</button>
       </div>
