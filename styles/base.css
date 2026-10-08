@@ -6,32 +6,26 @@
 
 body {
   background-color: var(--bg);
-  background-image: 
-    radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.04) 0%, transparent 40%),
-    radial-gradient(circle at 85% 80%, rgba(192, 132, 252, 0.04) 0%, transparent 40%),
-    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
   color: var(--text);
   font-family: var(--sans);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding: 84px 24px 32px 24px;
-  position: relative;
+  justify-content: center;
+  padding: 80px 20px 24px 20px;
   overflow-x: hidden;
+  position: relative;
+}
+
+/* Ідеальне центрування ігрових екранів */
+.game-hub-container,
+.machine-wrapper,
+.chain-game-wrapper,
+.conn-game-wrapper {
+  margin: auto;
 }
 
 .hidden {
   display: none !important;
-}
-
-.player-p1-text {
-  color: var(--cyan);
-}
-
-.player-p2-text {
-  color: var(--purple);
 }

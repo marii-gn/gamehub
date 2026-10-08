@@ -1,15 +1,19 @@
 import { CLOUD_WORDS, MASTER_CATEGORIES } from "./data/categories.js";
+import { CONNECTIONS_PUZZLES } from "./data/connections.js";
 import { GameEngine } from "./services/game-engine.js";
 import { ChainEngine } from "./services/chain-engine.js";
+import { ConnectionsEngine } from "./services/connections-engine.js";
 import { StorageService } from "./services/storage.js";
 import { GameView } from "./ui/view.js";
 import { BackgroundAnimation } from "./ui/background.js";
 import { ConstellationAnimation } from "./ui/constellation.js";
+import { ClusterBgAnimation } from "./ui/cluster-bg.js";
 
 class App {
   constructor() {
     this.catEngine = new GameEngine(MASTER_CATEGORIES);
     this.chainEngine = new ChainEngine();
+    this.connEngine = new ConnectionsEngine(CONNECTIONS_PUZZLES);
     this.view = new GameView();
 
     this.bgCloud = new BackgroundAnimation("wordCloud", CLOUD_WORDS, (word) => {
@@ -21,16 +25,20 @@ class App {
     });
 
     this.bgConstellation = new ConstellationAnimation("constellationBg");
+    this.bgCluster = new ClusterBgAnimation("clusterBg");
   }
 
   init() {
     this.bgCloud.init();
     this.bgConstellation.init();
+    this.bgCluster.init();
+
     this.initUserSession();
     this.initDragAndDrop();
     this.bindNavigationEvents();
     this.bindCategoriesEvents();
     this.bindChainEvents();
+    this.bindConnectionsEvents();
 
     this.openHub();
   }
@@ -45,15 +53,20 @@ class App {
     }
   }
 
-  openHub() {
+  stopAllBackgrounds() {
     this.bgConstellation.stop();
+    this.bgCluster.stop();
+  }
+
+  openHub() {
+    this.stopAllBackgrounds();
     this.view.showScreen("hub");
     const stats = StorageService.getStats();
     this.view.renderHubStats(stats);
   }
 
   openCategories() {
-    this.bgConstellation.stop();
+    this.stopAllBackgrounds();
     this.view.showScreen("categories");
     this.catEngine.startNewGame();
     this.syncCategoriesUI();
@@ -62,10 +75,19 @@ class App {
   }
 
   openChain() {
+    this.stopAllBackgrounds();
     this.view.showScreen("chain");
     this.bgConstellation.start();
     this.chainEngine.startNewGame();
     this.view.renderChainBoard(this.chainEngine);
+  }
+
+  openConnections() {
+    this.stopAllBackgrounds();
+    this.view.showScreen("connections");
+    this.bgCluster.start();
+    this.connEngine.startNewGame();
+    this.view.renderConnectionsBoard(this.connEngine);
   }
 
   syncCategoriesUI() {
@@ -87,34 +109,32 @@ class App {
         const game = tab.dataset.game;
         if (game === "categories") this.openCategories();
         else if (game === "chain") this.openChain();
+        else if (game === "connections") this.openConnections();
       });
     });
 
     document.getElementById("btnPlayCategories")?.addEventListener("click", () => this.openCategories());
     document.getElementById("btnPlayChain")?.addEventListener("click", () => this.openChain());
+    document.getElementById("btnPlayConnections")?.addEventListener("click", () => this.openConnections());
   }
 
   initDragAndDrop() {
-    const handleDropOnInput = (input) => {
-      if (!input) return;
-      input.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "copy";
-        input.classList.add("drag-over");
-      });
-      input.addEventListener("dragleave", () => input.classList.remove("drag-over"));
-      input.addEventListener("drop", (e) => {
-        e.preventDefault();
-        input.classList.remove("drag-over");
-        const word = e.dataTransfer.getData("text/plain");
-        if (word) {
-          input.value = word;
-          input.focus();
-        }
-      });
-    };
-
-    handleDropOnInput(document.getElementById("wordInput"));
+    const input = document.getElementById("wordInput");
+    if (!input) return;
+    input.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      input.classList.add("drag-over");
+    });
+    input.addEventListener("dragleave", () => input.classList.remove("drag-over"));
+    input.addEventListener("drop", (e) => {
+      e.preventDefault();
+      input.classList.remove("drag-over");
+      const word = e.dataTransfer.getData("text/plain");
+      if (word) {
+        input.value = word;
+        input.focus();
+      }
+    });
   }
 
   // --- ТАЄМНІ КАТЕГОРІЇ ---
@@ -134,15 +154,11 @@ class App {
     const handlePeekStart = (e) => {
       if (e.type === "touchstart") e.preventDefault();
       const current = this.catEngine.getCurrentPlayerCategory();
-      if (current) {
-        this.view.showVaultCategory(`Секретна умова: Гравець ${this.catEngine.currentPlayer}`, current.text);
-      }
+      if (current) this.view.showVaultCategory(`Секретна умова: Гравець ${this.catEngine.currentPlayer}`, current.text);
     };
 
     const handlePeekEnd = () => {
-      if (this.catEngine.mode !== "solo") {
-        this.view.hideVaultCategory();
-      }
+      if (this.catEngine.mode !== "solo") this.view.hideVaultCategory();
     };
 
     const peekBtn = document.getElementById("peekBtn");
@@ -186,11 +202,7 @@ class App {
     const handleManualWord = (isMatch) => {
       const inputEl = document.getElementById("wordInput");
       const text = inputEl ? inputEl.value.trim() : "";
-      if (!text) {
-        inputEl?.focus();
-        return;
-      }
-
+      if (!text) return;
       this.catEngine.addWord(text, isMatch);
       this.catEngine.switchTurn();
       this.view.clearCategoriesInputs();
@@ -213,15 +225,11 @@ class App {
       const text = inputEl ? inputEl.value.trim().toLowerCase() : "";
       if (!text) return;
 
-      // Проверка на повторно введенное слово
       if (this.catEngine.hasWordBeenAsked(text)) {
         this.view.showModal(
           false,
           null,
-          () => {
-            inputEl.focus();
-            inputEl.select();
-          },
+          () => inputEl.focus(),
           "Слово вже було!",
           `Ви вже перевіряли слово «${text}». Спробуйте інше!`
         );
@@ -253,9 +261,7 @@ class App {
           if (isWin) this.openCategories();
         },
         isWin ? "Перемога!" : "Спробуй ще!",
-        isWin 
-          ? `Гравець ${StorageService.getUserName()} розгадав категорію!` 
-          : "Умова не розгадана. Продовжуйте пошук слів!"
+        isWin ? `Гравець ${StorageService.getUserName()} розгадав категорію!` : "Умова не розгадана. Продовжуйте пошук слів!"
       );
       if (guessInput) guessInput.value = "";
     };
@@ -287,7 +293,7 @@ class App {
     });
   }
 
-  // --- ЛАНЦЮГ СЛІВ (ІНТЕРАКТИВНІ КЛІТИНКИ) ---
+  // --- ЛАНЦЮГ СЛІВ ---
   bindChainEvents() {
     const track = this.view.elements.chainTrack;
     if (!track) return;
@@ -308,7 +314,6 @@ class App {
     track.addEventListener("keydown", (e) => {
       if (e.target && e.target.classList.contains("chain-cell-input")) {
         const input = e.target;
-
         if (e.key === "Backspace") {
           if (input.value === "") {
             const prev = input.previousElementSibling;
@@ -368,6 +373,65 @@ class App {
     }
 
     this.view.renderChainBoard(this.chainEngine);
+  }
+
+  // --- КОД ЧОТИРЬОХ (4x4) ---
+  bindConnectionsEvents() {
+    this.view.elements.connGrid?.addEventListener("click", (e) => {
+      const card = e.target.closest(".conn-card");
+      if (!card) return;
+      const tileId = card.dataset.tileId;
+      this.connEngine.toggleSelect(tileId);
+      this.view.renderConnectionsBoard(this.connEngine);
+    });
+
+    this.view.elements.btnConnShuffle?.addEventListener("click", () => {
+      this.connEngine.shuffleRemaining();
+      this.view.renderConnectionsBoard(this.connEngine);
+    });
+
+    this.view.elements.btnConnClear?.addEventListener("click", () => {
+      this.connEngine.clearSelection();
+      this.view.renderConnectionsBoard(this.connEngine);
+    });
+
+    this.view.elements.btnConnSubmit?.addEventListener("click", () => {
+      const res = this.connEngine.submitSelection();
+
+      if (res.status === "incomplete") {
+        this.view.setConnFeedback("Оберіть рівно 4 картки!", "warning");
+      } else if (res.status === "correct") {
+        this.view.setConnFeedback(`Знайдено: ${res.group.title}!`, "success");
+        this.view.renderConnectionsBoard(this.connEngine);
+      } else if (res.status === "win") {
+        StorageService.recordConnectionsResult(true, 4);
+        this.view.renderConnectionsBoard(this.connEngine);
+        this.view.showModal(
+          true,
+          "Всі 4 кластери розкрито безпомилково!",
+          () => this.openConnections(),
+          "Код Чотирьох Зламано!",
+          `Вітаємо, ${StorageService.getUserName()}! Ви обійшли всі пастки системи.`
+        );
+      } else if (res.status === "wrong") {
+        if (res.oneAway) {
+          this.view.setConnFeedback("Майже! Одне слово зайве (3 з 4)", "warning");
+        } else {
+          this.view.setConnFeedback("Помилка зв'язку! -1 спроба", "error");
+        }
+        this.view.renderConnectionsBoard(this.connEngine);
+      } else if (res.status === "lose") {
+        StorageService.recordConnectionsResult(false, this.connEngine.solvedGroups.length);
+        this.view.renderConnectionsBoard(this.connEngine);
+        this.view.showModal(
+          false,
+          `Зламано кластерів: ${this.connEngine.solvedGroups.length} з 4`,
+          () => this.openConnections(),
+          "Доступ заблоковано!",
+          "Спроби вичерпано. Пастки спрацювали — спробуйте зламати наступний код!"
+        );
+      }
+    });
   }
 }
 

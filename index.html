@@ -15,11 +15,10 @@
 </head>
 <body>
 
-  <!-- ФОНОВА ХМАРА СЛІВ (для Таємних Категорій) -->
+  <!-- ФОНОВІ ЕФЕКТИ -->
   <div class="word-cloud-bg" id="wordCloud"></div>
-
-  <!-- ФОНОВІ СУЗІР'Я (для Ланцюга Слів) -->
   <canvas class="constellation-bg hidden" id="constellationBg"></canvas>
+  <canvas class="cluster-bg hidden" id="clusterBg"></canvas>
 
   <!-- ВЕРХНЯ НАВІГАЦІЙНА ПАНЕЛЬ -->
   <header class="top-nav-bar" id="topNavBar">
@@ -28,6 +27,7 @@
       <div class="nav-games-menu">
         <button class="nav-game-tab" data-game="categories">Таємні Категорії</button>
         <button class="nav-game-tab" data-game="chain">Ланцюг Слів</button>
+        <button class="nav-game-tab" data-game="connections">Код Чотирьох</button>
       </div>
     </div>
     
@@ -45,7 +45,7 @@
       <p class="hub-subtitle">Обирайте лінгвістичний режим, тренуйте логіку та встановлюйте рекорди</p>
     </div>
 
-    <!-- Список ігор -->
+    <!-- Список ігор (3 картки) -->
     <div class="hub-grid">
       <!-- Картка 1: Таємні категорії -->
       <article class="hub-card" id="cardSecretCategories">
@@ -53,9 +53,7 @@
         <div class="hub-card-meta">2 Гравці / Бот • Дедукція</div>
         <h2 class="hub-card-title">Таємні Категорії</h2>
         <p class="hub-card-desc">Розгадайте приховану умову суперника за допомогою перевірочних слів, асоціативних та векторних підказок.</p>
-        
         <div class="hub-card-stats" id="statsCategoriesCard"></div>
-
         <button class="physical-btn hub-play-btn btn-categories-accent" id="btnPlayCategories">Грати в Категорії</button>
       </article>
 
@@ -64,11 +62,19 @@
         <div class="hub-card-indicator" style="--c: var(--green);"></div>
         <div class="hub-card-meta">Соло • 100 Балів • Фразеологія</div>
         <h2 class="hub-card-title">Ланцюг Слів</h2>
-        <p class="hub-card-desc">Складайте неперервні словосполучення від стартового до фінішного слова, відкриваючи мінімум штрафних літер.</p>
-        
+        <p class="hub-card-desc">Складайте неперервні словосполучення від стартового до фінішного слова у вигляді інтерактивних комірок.</p>
         <div class="hub-card-stats" id="statsChainCard"></div>
-
         <button class="physical-btn hub-play-btn btn-chain-accent" id="btnPlayChain">Грати в Ланцюг Слів</button>
+      </article>
+
+      <!-- Картка 3: Код Чотирьох -->
+      <article class="hub-card" id="cardConnections">
+        <div class="hub-card-indicator" style="--c: var(--purple);"></div>
+        <div class="hub-card-meta">Соло • 16 Карток • 5 Життів • Пастки</div>
+        <h2 class="hub-card-title">Код Чотирьох</h2>
+        <p class="hub-card-desc">Знайдіть 4 приховані групи по 4 слова. Остерігайтеся хибних перетинів: є лише один безпомилковий спосіб зламати код!</p>
+        <div class="hub-card-stats" id="statsConnectionsCard"></div>
+        <button class="physical-btn hub-play-btn btn-connections-accent" id="btnPlayConnections">Зламати Код</button>
       </article>
     </div>
 
@@ -81,7 +87,6 @@
 
   <!-- ==================== ЕКРАН 2: ТАЄМНІ КАТЕГОРІЇ ==================== -->
   <main class="machine-wrapper hidden" id="categoriesScreen">
-    <!-- Лівий блок: Гравець 1 -->
     <section class="module-plate col-p1" id="colP1">
       <header class="module-header">
         <div><span class="led-indicator"></span><span class="player-p1-text">Гравець 1</span></div>
@@ -90,7 +95,6 @@
       <div class="tape-list" id="listP1"></div>
     </section>
 
-    <!-- Центр керування -->
     <section class="module-plate center-sector">
       <div class="mode-rack">
         <button class="mode-tab active" id="modeFriendBtn">Дуель</button>
@@ -112,7 +116,6 @@
         <button class="physical-btn" id="nextBtn">Передати хід</button>
       </div>
 
-      <!-- Підказки -->
       <section class="intel-sector">
         <div class="intel-bar">
           <span id="intelHeader">Розвідка умови супротивника</span>
@@ -124,19 +127,15 @@
         <div class="intel-screen" id="intelScreen">Підказки відключені</div>
       </section>
 
-      <!-- Введення слова-перевірки -->
       <div class="input-console">
         <input type="text" class="terminal-input" id="wordInput" placeholder="Введіть або перетягніть слово сюди..." autocomplete="off">
-        
         <div class="verdict-grid" id="duelButtons">
           <button class="physical-btn btn-accept" id="btnYes">Підходить</button>
           <button class="physical-btn btn-reject" id="btnNo">Не підходить</button>
         </div>
-
         <button class="physical-btn btn-ask-bot hidden" id="btnAskBot">Запитати бота [Enter]</button>
       </div>
 
-      <!-- Блок відгадування категорії бота -->
       <div class="guess-box hidden" id="guessBox">
         <span class="guess-label">Фінальний здогад категорії:</span>
         <input type="text" class="terminal-input" id="guessInput" placeholder="Яка суть категорії бота?..." autocomplete="off">
@@ -146,7 +145,6 @@
       <button class="footer-reset" id="resetBtn">Скинути поточну сесію</button>
     </section>
 
-    <!-- Правий блок: Гравець 2 / Бот -->
     <section class="module-plate col-p2" id="colP2">
       <header class="module-header">
         <div><span class="led-indicator"></span><span id="colP2Title" class="player-p2-text">Гравець 2</span></div>
@@ -171,10 +169,8 @@
         </div>
       </header>
 
-      <!-- 7 ланок ланцюжка -->
       <div class="chain-track" id="chainTrack"></div>
 
-      <!-- Нижня інформативна зона -->
       <div class="chain-hint-bar" id="chainHintBar">
         <div class="chain-hint-info">
           <span>Словосполучення: </span>
@@ -184,9 +180,36 @@
         <div class="chain-feedback" id="chainFeedbackMsg"></div>
       </div>
 
-      <!-- Завершення ланцюжка -->
       <div class="chain-finish-controls hidden" id="chainFinishControls">
         <button class="physical-btn btn-chain-accent" id="btnNextChain">Наступний Ланцюжок</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== ЕКРАН 4: КОД ЧОТИРЬОХ ==================== -->
+  <main class="conn-game-wrapper hidden" id="connScreen">
+    <section class="module-plate conn-panel">
+      <header class="conn-header">
+        <div>
+          <div class="hub-tag">Кібер-Кластери // 4 x 4</div>
+          <h2 class="conn-title">Код Чотирьох</h2>
+        </div>
+        <div class="conn-lives-cluster">
+          <span class="conn-lives-label">СПРОБИ:</span>
+          <div class="conn-lives-dots" id="connLivesDots"></div>
+        </div>
+      </header>
+
+      <div class="conn-solved-container" id="connSolvedContainer"></div>
+      <div class="conn-grid" id="connGrid"></div>
+
+      <div class="conn-actions-bar">
+        <div class="conn-feedback" id="connFeedbackMsg"></div>
+        <div class="conn-buttons">
+          <button class="physical-btn conn-action-btn" id="btnConnShuffle">Перемішати</button>
+          <button class="physical-btn conn-action-btn" id="btnConnClear">Скинути вибір</button>
+          <button class="physical-btn conn-submit-btn" id="btnConnSubmit">З'єднати (4)</button>
+        </div>
       </div>
     </section>
   </main>
