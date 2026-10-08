@@ -10,6 +10,7 @@ export class ConnectionsEngine {
     this.lives = 5;
     this.isGameOver = false;
     this.isWin = false;
+    this.usedHintsCount = 0;
   }
 
   startNewGame() {
@@ -20,6 +21,7 @@ export class ConnectionsEngine {
     this.selectedIds = [];
     this.isGameOver = false;
     this.isWin = false;
+    this.usedHintsCount = 0;
 
     const items = [];
     this.currentPuzzle.groups.forEach((group, gIdx) => {
@@ -117,5 +119,32 @@ export class ConnectionsEngine {
 
   clearSelection() {
     this.selectedIds = [];
+  }
+
+  // Генерація легкої підказки про тему невідгаданої групи
+  getGentleHint() {
+    if (this.isGameOver) return null;
+
+    const solvedTitles = this.solvedGroups.map(g => g.title);
+    const unsolved = this.currentPuzzle.groups.filter(g => !solvedTitles.includes(g.title));
+
+    if (unsolved.length === 0) return null;
+
+    this.usedHintsCount++;
+    const targetGroup = unsolved[0];
+
+    // Легкий натяк: показуємо суть теми без назви конкретних слів
+    return `Одна з груп пов'язана з темою: «${targetGroup.title}»`;
+  }
+
+  // Повний розв'язок (для відображення всіх 4 груп наприкінці гри)
+  getAllSolvedGroups() {
+    return this.currentPuzzle.groups.map(g => {
+      const groupTiles = this.tiles.filter(t => g.items.includes(t.text));
+      return {
+        ...g,
+        items: groupTiles.length ? groupTiles : g.items.map(txt => ({ text: txt }))
+      };
+    });
   }
 }

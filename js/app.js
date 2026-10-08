@@ -87,6 +87,7 @@ class App {
     this.view.showScreen("connections");
     this.bgCluster.start();
     this.connEngine.startNewGame();
+    this.view.hideConnHint();
     this.view.renderConnectionsBoard(this.connEngine);
   }
 
@@ -95,8 +96,7 @@ class App {
     this.view.renderCategoriesMode(
       this.catEngine.mode,
       this.catEngine.currentPlayer,
-      targetPlayer,
-      this.catEngine.isSoloRevealed
+      targetPlayer
     );
     this.view.renderHistory(this.catEngine.wordsP1, this.catEngine.wordsP2);
   }
@@ -152,13 +152,14 @@ class App {
     });
 
     const handlePeekStart = (e) => {
+      if (this.catEngine.mode === "solo") return; // Блокуємо будь-яке підглядання в соло
       if (e.type === "touchstart") e.preventDefault();
       const current = this.catEngine.getCurrentPlayerCategory();
       if (current) this.view.showVaultCategory(`Секретна умова: Гравець ${this.catEngine.currentPlayer}`, current.text);
     };
 
     const handlePeekEnd = () => {
-      if (this.catEngine.mode !== "solo") this.view.hideVaultCategory();
+      this.view.hideVaultCategory();
     };
 
     const peekBtn = document.getElementById("peekBtn");
@@ -168,18 +169,7 @@ class App {
     window.addEventListener("touchend", handlePeekEnd);
 
     document.getElementById("nextBtn")?.addEventListener("click", () => {
-      if (this.catEngine.mode === "solo") {
-        this.catEngine.isSoloRevealed = !this.catEngine.isSoloRevealed;
-        if (this.catEngine.isSoloRevealed) {
-          this.view.showVaultCategory("Загадана категорія Бота:", this.catEngine.p2Category.text);
-          const nextBtn = document.getElementById("nextBtn");
-          if (nextBtn) nextBtn.textContent = "Заховати";
-        } else {
-          this.view.hideVaultCategory();
-          const nextBtn = document.getElementById("nextBtn");
-          if (nextBtn) nextBtn.textContent = "Розкрити";
-        }
-      } else {
+      if (this.catEngine.mode === "friend") {
         this.catEngine.switchTurn();
         this.view.hideVaultCategory();
         this.view.resetIntelScreen();
@@ -367,7 +357,7 @@ class App {
         true,
         `Рахунок: ${finalScore} / 100 б.`,
         () => {},
-        "ти розумничок, закрив ланцюжок",
+        "ти супер, я в тебе не вірила",
         `Вітаємо, ${StorageService.getUserName()}! Всі словосполучення складено ідеально.`
       );
     }
@@ -390,6 +380,14 @@ class App {
       this.view.renderConnectionsBoard(this.connEngine);
     });
 
+    this.view.elements.btnConnHint?.addEventListener("click", () => {
+      const hint = this.connEngine.getGentleHint();
+      if (hint) {
+        this.view.showConnHint(hint);
+        this.view.setConnFeedback("Система проаналізувала один із кластерів", "warning");
+      }
+    });
+
     this.view.elements.btnConnClear?.addEventListener("click", () => {
       this.connEngine.clearSelection();
       this.view.renderConnectionsBoard(this.connEngine);
@@ -401,17 +399,21 @@ class App {
       if (res.status === "incomplete") {
         this.view.setConnFeedback("Оберіть рівно 4 картки!", "warning");
       } else if (res.status === "correct") {
-        this.view.setConnFeedback(`Знайдено: ${res.group.title}!`, "success");
+        this.view.setConnFeedback(`Кластер розкрито: ${res.group.title}!`, "success");
+        this.view.hideConnHint();
         this.view.renderConnectionsBoard(this.connEngine);
       } else if (res.status === "win") {
         StorageService.recordConnectionsResult(true, 4);
-        this.view.renderConnectionsBoard(this.connEngine);
+
         this.view.showModal(
           true,
-          "Всі 4 кластери розкрито безпомилково!",
-          () => this.openConnections(),
-          "Код Чотирьох Зламано!",
-          `Вітаємо, ${StorageService.getUserName()}! Ви обійшли всі пастки системи.`
+          "Код 4x4 зламано безпомилково!",
+          () => {
+            const allSolved = this.connEngine.getAllSolvedGroups();
+            this.view.renderFullConnectionsSolution(allSolved);
+          },
+          "ти супер, я в тебе не вірила",
+          `Вітаємо, ${StorageService.getUserName()}! Усі 4 приховані групи знайдено.`
         );
       } else if (res.status === "wrong") {
         if (res.oneAway) {
@@ -422,15 +424,22 @@ class App {
         this.view.renderConnectionsBoard(this.connEngine);
       } else if (res.status === "lose") {
         StorageService.recordConnectionsResult(false, this.connEngine.solvedGroups.length);
-        this.view.renderConnectionsBoard(this.connEngine);
+
         this.view.showModal(
           false,
-          `Зламано кластерів: ${this.connEngine.solvedGroups.length} з 4`,
-          () => this.openConnections(),
-          "Доступ заблоковано!",
-          "Спроби вичерпано. Пастки спрацювали — спробуйте зламати наступний код!"
+          `Зламано груп: ${this.connEngine.solvedGroups.length} з 4`,
+          () => {
+            const allSolved = this.connEngine.getAllSolvedGroups();
+            this.view.renderFullConnectionsSolution(allSolved);
+          },
+          "Спроби вичерпано!",
+          "Пастки спрацювали. Ось повний розв'язок цього коду:"
         );
       }
+    });
+
+    this.view.elements.btnNextCode?.addEventListener("click", () => {
+      this.openConnections();
     });
   }
 }

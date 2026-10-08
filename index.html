@@ -45,7 +45,7 @@
       <p class="hub-subtitle">Обирайте лінгвістичний режим, тренуйте логіку та встановлюйте рекорди</p>
     </div>
 
-    <!-- Список ігор (3 картки) -->
+    <!-- Список ігор -->
     <div class="hub-grid">
       <!-- Картка 1: Таємні категорії -->
       <article class="hub-card" id="cardSecretCategories">
@@ -194,22 +194,38 @@
           <div class="hub-tag">Кібер-Кластери // 4 x 4</div>
           <h2 class="conn-title">Код Чотирьох</h2>
         </div>
-        <div class="conn-lives-cluster">
+        <div class="conn-lives-cluster" id="connLivesCluster">
           <span class="conn-lives-label">СПРОБИ:</span>
           <div class="conn-lives-dots" id="connLivesDots"></div>
         </div>
       </header>
 
+      <!-- Відгадані та розкриті групи -->
       <div class="conn-solved-container" id="connSolvedContainer"></div>
+      
+      <!-- Сітка 16 карток -->
       <div class="conn-grid" id="connGrid"></div>
 
-      <div class="conn-actions-bar">
+      <!-- Зона підказки -->
+      <div class="conn-hint-banner hidden" id="connHintBanner">
+        <span class="conn-hint-tag">СИГНАЛ ПІДКАЗКИ:</span>
+        <span class="conn-hint-text" id="connHintText"></span>
+      </div>
+
+      <!-- Панель дій під час гри -->
+      <div class="conn-actions-bar" id="connActionsBar">
         <div class="conn-feedback" id="connFeedbackMsg"></div>
         <div class="conn-buttons">
           <button class="physical-btn conn-action-btn" id="btnConnShuffle">Перемішати</button>
+          <button class="physical-btn conn-action-btn" id="btnConnHint">Підказка</button>
           <button class="physical-btn conn-action-btn" id="btnConnClear">Скинути вибір</button>
           <button class="physical-btn conn-submit-btn" id="btnConnSubmit">З'єднати (4)</button>
         </div>
+      </div>
+
+      <!-- Фінальна панель після закінчення та показу повного розв'язку -->
+      <div class="conn-finish-controls hidden" id="connFinishControls">
+        <button class="physical-btn btn-connections-accent conn-finish-btn" id="btnNextCode">Наступний Код</button>
       </div>
     </section>
   </main>

@@ -47,11 +47,18 @@ export class GameView {
       chainFinishControls: document.getElementById("chainFinishControls"),
       btnNextChain: document.getElementById("btnNextChain"),
 
+      connLivesCluster: document.getElementById("connLivesCluster"),
       connLivesDots: document.getElementById("connLivesDots"),
       connSolvedContainer: document.getElementById("connSolvedContainer"),
       connGrid: document.getElementById("connGrid"),
+      connHintBanner: document.getElementById("connHintBanner"),
+      connHintText: document.getElementById("connHintText"),
+      connActionsBar: document.getElementById("connActionsBar"),
+      connFinishControls: document.getElementById("connFinishControls"),
+      btnNextCode: document.getElementById("btnNextCode"),
       connFeedbackMsg: document.getElementById("connFeedbackMsg"),
       btnConnShuffle: document.getElementById("btnConnShuffle"),
+      btnConnHint: document.getElementById("btnConnHint"),
       btnConnClear: document.getElementById("btnConnClear"),
       btnConnSubmit: document.getElementById("btnConnSubmit"),
 
@@ -145,7 +152,7 @@ export class GameView {
   }
 
   // --- РЕНДЕР КАТЕГОРІЙ ---
-  renderCategoriesMode(mode, currentPlayer, targetPlayer, isSoloRevealed) {
+  renderCategoriesMode(mode, currentPlayer, targetPlayer) {
     const isSolo = mode === "solo";
     this.elements.categoriesScreen?.classList.toggle("solo-mode", isSolo);
     this.elements.modeSoloBtn?.classList.toggle("active", isSolo);
@@ -160,8 +167,16 @@ export class GameView {
       this.elements.duelButtons?.classList.add("hidden");
       this.elements.btnAskBot?.classList.remove("hidden");
       this.elements.guessBox?.classList.remove("hidden");
+
+      // ПРИБИРАЄМО МОЖЛИВІСТЬ РОЗКРИТТЯ АБО ПІДГЛЯДАННЯ В СОЛО-РЕЖИМІ
       this.elements.peekBtn?.classList.add("hidden");
-      if (this.elements.nextBtn) this.elements.nextBtn.textContent = isSoloRevealed ? "Заховати" : "Розкрити";
+      this.elements.nextBtn?.classList.add("hidden");
+      
+      // Замикаємо сейф і ховаємо текст
+      this.elements.vaultBox?.classList.add("locked");
+      if (this.elements.vaultStatus) this.elements.vaultStatus.textContent = "Умова бота закодована";
+      if (this.elements.vaultContent) this.elements.vaultContent.textContent = "[ ЗДОГАДАЙТЕСЯ ЗА СЛОВАМИ ]";
+
       if (this.elements.colP2) this.elements.colP2.className = "module-plate col-p2 active-target";
     } else {
       if (this.elements.colP2Title) this.elements.colP2Title.textContent = "Гравець 2";
@@ -172,8 +187,12 @@ export class GameView {
       this.elements.duelButtons?.classList.remove("hidden");
       this.elements.btnAskBot?.classList.add("hidden");
       this.elements.guessBox?.classList.add("hidden");
+
+      // Повертаємо кнопки для режиму дуелі двох гравців
       this.elements.peekBtn?.classList.remove("hidden");
+      this.elements.nextBtn?.classList.remove("hidden");
       if (this.elements.nextBtn) this.elements.nextBtn.textContent = "Передати хід";
+
       if (this.elements.colP1) this.elements.colP1.className = `module-plate col-p1 ${targetPlayer === 1 ? "active-target" : ""}`;
       if (this.elements.colP2) this.elements.colP2.className = `module-plate col-p2 ${targetPlayer === 2 ? "active-target" : ""}`;
     }
@@ -337,14 +356,55 @@ export class GameView {
 
     if (this.elements.connGrid) {
       const activeTiles = engine.tiles.filter(t => !engine.isTileSolved(t.id));
-      this.elements.connGrid.innerHTML = activeTiles.map(t => {
-        const isSelected = engine.selectedIds.includes(t.id);
-        return `
-          <div class="conn-card ${isSelected ? "selected" : ""}" data-tile-id="${t.id}">
-            ${t.text}
-          </div>
-        `;
-      }).join("");
+      if (activeTiles.length === 0) {
+        this.elements.connGrid.innerHTML = "";
+      } else {
+        this.elements.connGrid.innerHTML = activeTiles.map(t => {
+          const isSelected = engine.selectedIds.includes(t.id);
+          return `
+            <div class="conn-card ${isSelected ? "selected" : ""}" data-tile-id="${t.id}">
+              ${t.text}
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    if (engine.isGameOver) {
+      this.elements.connActionsBar?.classList.add("hidden");
+      this.elements.connHintBanner?.classList.add("hidden");
+      this.elements.connFinishControls?.classList.remove("hidden");
+    } else {
+      this.elements.connActionsBar?.classList.remove("hidden");
+      this.elements.connFinishControls?.classList.add("hidden");
+    }
+  }
+
+  renderFullConnectionsSolution(allGroups) {
+    if (this.elements.connGrid) this.elements.connGrid.innerHTML = "";
+    if (this.elements.connSolvedContainer) {
+      this.elements.connSolvedContainer.innerHTML = allGroups.map(g => `
+        <div class="conn-solved-banner" style="background: ${g.color}18; border-color: ${g.color};">
+          <div class="conn-solved-title" style="color: ${g.color};">${g.title}</div>
+          <div class="conn-solved-words">${g.items.map(it => it.text).join(", ")}</div>
+        </div>
+      `).join("");
+    }
+    this.elements.connActionsBar?.classList.add("hidden");
+    this.elements.connHintBanner?.classList.add("hidden");
+    this.elements.connFinishControls?.classList.remove("hidden");
+  }
+
+  showConnHint(hintText) {
+    if (this.elements.connHintBanner && this.elements.connHintText) {
+      this.elements.connHintText.textContent = hintText;
+      this.elements.connHintBanner.classList.remove("hidden");
+    }
+  }
+
+  hideConnHint() {
+    if (this.elements.connHintBanner) {
+      this.elements.connHintBanner.classList.add("hidden");
     }
   }
 
