@@ -9,10 +9,12 @@ export class GameView {
       categoriesScreen: document.getElementById("categoriesScreen"),
       chainScreen: document.getElementById("chainScreen"),
       connScreen: document.getElementById("connScreen"),
+      semantleScreen: document.getElementById("semantleScreen"),
 
       statsCategoriesCard: document.getElementById("statsCategoriesCard"),
       statsChainCard: document.getElementById("statsChainCard"),
       statsConnectionsCard: document.getElementById("statsConnectionsCard"),
+      statsSemantleCard: document.getElementById("statsSemantleCard"),
       recentSessionsList: document.getElementById("recentSessionsList"),
 
       colP1: document.getElementById("colP1"),
@@ -62,6 +64,16 @@ export class GameView {
       btnConnClear: document.getElementById("btnConnClear"),
       btnConnSubmit: document.getElementById("btnConnSubmit"),
 
+      semantleGuessCount: document.getElementById("semantleGuessCount"),
+      semantleWordInput: document.getElementById("semantleWordInput"),
+      btnSemantleGuess: document.getElementById("btnSemantleGuess"),
+      btnSemantleHint: document.getElementById("btnSemantleHint"),
+      btnSemantleSurrender: document.getElementById("btnSemantleSurrender"),
+      semantleFeedback: document.getElementById("semantleFeedback"),
+      semantleTableBody: document.getElementById("semantleTableBody"),
+      semantleFinishBox: document.getElementById("semantleFinishBox"),
+      btnNextSemantleWord: document.getElementById("btnNextSemantleWord"),
+
       modal: document.getElementById("resultModal"),
       modalCard: document.getElementById("modalCard"),
       modalTitle: document.getElementById("modalTitle"),
@@ -76,33 +88,39 @@ export class GameView {
   }
 
   showScreen(screenName) {
-    this.elements.hubScreen.classList.add("hidden");
-    this.elements.categoriesScreen.classList.add("hidden");
-    this.elements.chainScreen.classList.add("hidden");
-    this.elements.connScreen.classList.add("hidden");
+    this.elements.hubScreen?.classList.add("hidden");
+    this.elements.categoriesScreen?.classList.add("hidden");
+    this.elements.chainScreen?.classList.add("hidden");
+    this.elements.connScreen?.classList.add("hidden");
+    this.elements.semantleScreen?.classList.add("hidden");
 
-    this.elements.navGameTabs.forEach((tab) => {
+    this.elements.navGameTabs?.forEach((tab) => {
       tab.classList.toggle("active", tab.dataset.game === screenName);
     });
 
     const cloudBg = document.getElementById("wordCloud");
 
     if (screenName === "hub") {
-      this.elements.hubScreen.classList.remove("hidden");
+      this.elements.hubScreen?.classList.remove("hidden");
       if (cloudBg) cloudBg.style.display = "none";
     } else if (screenName === "categories") {
-      this.elements.categoriesScreen.classList.remove("hidden");
+      this.elements.categoriesScreen?.classList.remove("hidden");
       if (cloudBg) cloudBg.style.display = "block";
     } else if (screenName === "chain") {
-      this.elements.chainScreen.classList.remove("hidden");
+      this.elements.chainScreen?.classList.remove("hidden");
       if (cloudBg) cloudBg.style.display = "none";
     } else if (screenName === "connections") {
-      this.elements.connScreen.classList.remove("hidden");
+      this.elements.connScreen?.classList.remove("hidden");
+      if (cloudBg) cloudBg.style.display = "none";
+    } else if (screenName === "semantle") {
+      this.elements.semantleScreen?.classList.remove("hidden");
       if (cloudBg) cloudBg.style.display = "none";
     }
   }
 
   renderHubStats(stats) {
+    if (!stats) return;
+
     if (this.elements.statsCategoriesCard) {
       if (!stats.categories || stats.categories.played === 0) {
         this.elements.statsCategoriesCard.innerHTML = `<div class="stats-unplayed">⚡ Спробуй зіграти! (Ще не зіграно)</div>`;
@@ -132,6 +150,18 @@ export class GameView {
         this.elements.statsConnectionsCard.innerHTML = `
           <div class="stats-played-row"><span>Зіграно партій:</span><span class="stats-played-val">${stats.connections.played}</span></div>
           <div class="stats-played-row"><span>Розгадано 4/4:</span><span class="stats-played-val" style="color: var(--purple);">${stats.connections.wins}</span></div>
+        `;
+      }
+    }
+
+    if (this.elements.statsSemantleCard) {
+      if (!stats.semantle || stats.semantle.played === 0) {
+        this.elements.statsSemantleCard.innerHTML = `<div class="stats-unplayed">⚡ Спробуй зіграти! (Нова гра)</div>`;
+      } else {
+        const best = stats.semantle.bestGuesses === 999 ? "—" : `${stats.semantle.bestGuesses} спр.`;
+        this.elements.statsSemantleCard.innerHTML = `
+          <div class="stats-played-row"><span>Зіграно слів:</span><span class="stats-played-val">${stats.semantle.played}</span></div>
+          <div class="stats-played-row"><span>Найшвидше:</span><span class="stats-played-val" style="color: #f97316;">${best}</span></div>
         `;
       }
     }
@@ -166,14 +196,12 @@ export class GameView {
       this.elements.duelButtons?.classList.add("hidden");
       this.elements.btnAskBot?.classList.remove("hidden");
       this.elements.guessBox?.classList.remove("hidden");
-
       this.elements.peekBtn?.classList.add("hidden");
       this.elements.nextBtn?.classList.add("hidden");
       
       this.elements.vaultBox?.classList.add("locked");
       if (this.elements.vaultStatus) this.elements.vaultStatus.textContent = "Умова бота закодована";
       if (this.elements.vaultContent) this.elements.vaultContent.textContent = "[ ЗДОГАДАЙТЕСЯ ЗА СЛОВАМИ ]";
-
       if (this.elements.colP2) this.elements.colP2.className = "module-plate col-p2 active-target";
     } else {
       if (this.elements.colP2Title) this.elements.colP2Title.textContent = "Гравець 2";
@@ -184,7 +212,6 @@ export class GameView {
       this.elements.duelButtons?.classList.remove("hidden");
       this.elements.btnAskBot?.classList.add("hidden");
       this.elements.guessBox?.classList.add("hidden");
-
       this.elements.peekBtn?.classList.remove("hidden");
       this.elements.nextBtn?.classList.remove("hidden");
       if (this.elements.nextBtn) this.elements.nextBtn.textContent = "Передати хід";
@@ -194,15 +221,12 @@ export class GameView {
     }
   }
 
-  // Сортування: зелені (isMatch === true) зверху, червоні (isMatch === false) знизу
   renderHistory(wordsP1 = [], wordsP2 = []) {
     const renderList = (container, words) => {
       if (!container) return;
       const sortedWords = [...words].sort((a, b) => {
-        if (a.isMatch !== b.isMatch) {
-          return a.isMatch ? -1 : 1; // Правильні нагору
-        }
-        return b.time - a.time; // Новіші вище всередині своєї групи
+        if (a.isMatch !== b.isMatch) return a.isMatch ? -1 : 1;
+        return b.time - a.time;
       });
 
       container.innerHTML = sortedWords.map(w => `
@@ -244,8 +268,9 @@ export class GameView {
   }
 
   renderChainBoard(engine) {
+    if (!engine || !this.elements.chainTrack) return;
     const { items, targetIndex, solvedWords, revealedLetters, isFinished } = engine;
-    this.elements.chainTotalScore.textContent = engine.totalScore;
+    if (this.elements.chainTotalScore) this.elements.chainTotalScore.textContent = engine.totalScore;
 
     this.elements.chainTrack.innerHTML = items.map((item, idx) => {
       let stateClass = "locked-hidden";
@@ -315,15 +340,15 @@ export class GameView {
     }).join("");
 
     if (isFinished) {
-      this.elements.chainHintBar.classList.add("hidden");
-      this.elements.chainFinishControls.classList.remove("hidden");
+      this.elements.chainHintBar?.classList.add("hidden");
+      this.elements.chainFinishControls?.classList.remove("hidden");
     } else {
-      this.elements.chainHintBar.classList.remove("hidden");
-      this.elements.chainFinishControls.classList.add("hidden");
+      this.elements.chainHintBar?.classList.remove("hidden");
+      this.elements.chainFinishControls?.classList.add("hidden");
 
       const prevWord = engine.getPreviousTransitionWord();
-      this.elements.chainActivePrompt.textContent = `«${prevWord}» + [?]`;
-      this.elements.chainWordPotential.textContent = `(+${engine.calculateCurrentWordPotential()} б.)`;
+      if (this.elements.chainActivePrompt) this.elements.chainActivePrompt.textContent = `«${prevWord}» + [?]`;
+      if (this.elements.chainWordPotential) this.elements.chainWordPotential.textContent = `(+${engine.calculateCurrentWordPotential()} б.)`;
 
       const firstInput = document.querySelector(".chain-cell-input");
       if (firstInput) firstInput.focus();
@@ -340,6 +365,8 @@ export class GameView {
   }
 
   renderConnectionsBoard(engine) {
+    if (!engine) return;
+
     if (this.elements.connLivesDots) {
       let dotsHtml = "";
       for (let i = 0; i < 5; i++) {
@@ -418,6 +445,49 @@ export class GameView {
     setTimeout(() => {
       if (this.elements.connFeedbackMsg) this.elements.connFeedbackMsg.textContent = "";
     }, 2600);
+  }
+
+  renderSemantleBoard(engine) {
+    if (!engine) return;
+
+    if (this.elements.semantleGuessCount) {
+      this.elements.semantleGuessCount.textContent = engine.guesses.length;
+    }
+
+    if (this.elements.semantleTableBody) {
+      const sortedGuesses = [...engine.guesses].sort((a, b) => b.similarity - a.similarity);
+
+      if (sortedGuesses.length === 0) {
+        this.elements.semantleTableBody.innerHTML = `
+          <div style="font-family: var(--mono); font-size: 0.8rem; color: var(--text-dim); text-align: center; padding: 22px;">
+            Введіть перше слово, щоб почати пошук семантичного вектора!
+          </div>
+        `;
+      } else {
+        this.elements.semantleTableBody.innerHTML = sortedGuesses.map(g => `
+          <div class="semantle-row">
+            <span style="color: var(--text-dim);">${g.order}</span>
+            <span class="semantle-cell-word">${g.word}</span>
+            <span class="semantle-cell-score">${g.similarity.toFixed(2)}</span>
+            <span class="semantle-status-${g.proximity.css}">${g.proximity.label}</span>
+          </div>
+        `).join("");
+      }
+    }
+
+    if (engine.isWin || engine.isGaveUp) {
+      this.elements.semantleFinishBox?.classList.remove("hidden");
+    } else {
+      this.elements.semantleFinishBox?.classList.add("hidden");
+    }
+  }
+
+  setSemantleFeedback(msg) {
+    if (!this.elements.semantleFeedback) return;
+    this.elements.semantleFeedback.textContent = msg;
+    setTimeout(() => {
+      if (this.elements.semantleFeedback) this.elements.semantleFeedback.textContent = "";
+    }, 3200);
   }
 
   showModal(isWin, categoryText, onConfirm, customTitle, customDesc) {

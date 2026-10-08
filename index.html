@@ -15,10 +15,11 @@
 </head>
 <body>
 
-  <!-- ФОНОВІ ЕФЕКТИ (Сітка активна завжди) -->
+  <!-- ФОНОВІ ЕФЕКТИ -->
   <canvas class="cluster-bg" id="clusterBg"></canvas>
   <div class="word-cloud-bg" id="wordCloud"></div>
   <canvas class="constellation-bg hidden" id="constellationBg"></canvas>
+  <canvas class="thermal-bg" id="thermalBg"></canvas>
 
   <!-- ВЕРХНЯ НАВІГАЦІЙНА ПАНЕЛЬ -->
   <header class="top-nav-bar" id="topNavBar">
@@ -28,6 +29,7 @@
         <button class="nav-game-tab" data-game="categories">Таємні Категорії</button>
         <button class="nav-game-tab" data-game="chain">Ланцюг Слів</button>
         <button class="nav-game-tab" data-game="connections">Код Чотирьох</button>
+        <button class="nav-game-tab" data-game="semantle">Тепліше-Холодніше</button>
       </div>
     </div>
     
@@ -44,7 +46,6 @@
       <p class="hub-subtitle">Обирайте лінгвістичний режим, тренуйте логіку та встановлюйте рекорди</p>
     </div>
 
-    <!-- Список ігор -->
     <div class="hub-grid">
       <!-- Картка 1: Таємні категорії -->
       <article class="hub-card" id="cardSecretCategories">
@@ -69,15 +70,24 @@
       <!-- Картка 3: Код Чотирьох -->
       <article class="hub-card" id="cardConnections">
         <div class="hub-card-indicator" style="--c: var(--purple);"></div>
-        <div class="hub-card-meta">Соло • 16 Карток • 5 Життів • Пастки</div>
+        <div class="hub-card-meta">Соло • 16 Карток • 5 Спроб • Пастки</div>
         <h2 class="hub-card-title">Код Чотирьох</h2>
-        <p class="hub-card-desc">Знайдіть 4 приховані групи по 4 слова. Остерігайтеся хибних перетинів: є лише один безпомилковий спосіб зламати код!</p>
+        <p class="hub-card-desc">Знайдіть 4 приховані групи по 4 слова. Остерігайтеся хибних перетинів: є лише один спосіб зламати код!</p>
         <div class="hub-card-stats" id="statsConnectionsCard"></div>
         <button class="physical-btn hub-play-btn btn-connections-accent" id="btnPlayConnections">Зламати Код</button>
       </article>
+
+      <!-- Картка 4: Тепліше-Холодніше -->
+      <article class="hub-card" id="cardSemantle">
+        <div class="hub-card-indicator" style="--c: #f97316;"></div>
+        <div class="hub-card-meta">Соло • Семантична Відстань • 0-100%</div>
+        <h2 class="hub-card-title">Тепліше-Холодніше</h2>
+        <p class="hub-card-desc">Вводьте будь-які слова: система вимірює векторну близькість вашої здогадки до секретного слова українською.</p>
+        <div class="hub-card-stats" id="statsSemantleCard"></div>
+        <button class="physical-btn hub-play-btn btn-semantle-accent" id="btnPlaySemantle">Шукати Слово</button>
+      </article>
     </div>
 
-    <!-- Історія останніх сесій -->
     <section class="recent-sessions-box">
       <h3 class="recent-sessions-title">Останні ігрові сесії</h3>
       <div class="recent-sessions-list" id="recentSessionsList"></div>
@@ -107,6 +117,7 @@
 
       <div class="vault-box locked" id="vaultBox">
         <div class="vault-status" id="vaultStatus">Секретна умова захищена</div>
+        <div class="vault-content" id="vaultContent">[ ТРИМАЙТЕ ДЛЯ ПЕРЕГЛЯДУ ]</div>
       </div>
 
       <div class="controls-grid">
@@ -196,19 +207,14 @@
         </div>
       </header>
 
-      <!-- Відгадані та розкриті групи -->
       <div class="conn-solved-container" id="connSolvedContainer"></div>
-      
-      <!-- Сітка 16 карток -->
       <div class="conn-grid" id="connGrid"></div>
 
-      <!-- Зона підказки -->
       <div class="conn-hint-banner hidden" id="connHintBanner">
         <span class="conn-hint-tag">СИГНАЛ ПІДКАЗКИ:</span>
         <span class="conn-hint-text" id="connHintText"></span>
       </div>
 
-      <!-- Панель дій під час гри -->
       <div class="conn-actions-bar" id="connActionsBar">
         <div class="conn-feedback" id="connFeedbackMsg"></div>
         <div class="conn-buttons">
@@ -219,14 +225,52 @@
         </div>
       </div>
 
-      <!-- Фінальна панель після закінчення -->
       <div class="conn-finish-controls hidden" id="connFinishControls">
         <button class="physical-btn btn-connections-accent conn-finish-btn" id="btnNextCode">Наступний Код</button>
       </div>
     </section>
   </main>
 
-  <!-- Модальне вікно фіналу -->
+  <!-- ==================== ЕКРАН 5: ТЕПЛІШЕ-ХОЛОДНІШЕ ==================== -->
+  <main class="semantle-game-wrapper hidden" id="semantleScreen">
+    <section class="module-plate semantle-panel">
+      <header class="semantle-header">
+        <div>
+          <h2 class="semantle-title">Тепліше-Холодніше</h2>
+          <div class="semantle-subtitle">Вгадай секретне слово за семантичною близькістю</div>
+        </div>
+        <div class="semantle-stats-badge">
+          <span class="semantle-badge-label">СПРОБ:</span>
+          <span class="semantle-badge-val" id="semantleGuessCount">0</span>
+        </div>
+      </header>
+
+      <div class="semantle-input-cluster">
+        <input type="text" class="terminal-input semantle-input" id="semantleWordInput" placeholder="Введіть слово українською..." autocomplete="off">
+        <button class="physical-btn btn-semantle-accent" id="btnSemantleGuess">Вгадати</button>
+        <button class="physical-btn semantle-tool-btn" id="btnSemantleHint">Підказка</button>
+        <button class="physical-btn semantle-tool-btn" id="btnSemantleSurrender">Здатися</button>
+      </div>
+
+      <div class="semantle-feedback" id="semantleFeedback"></div>
+
+      <div class="semantle-table-wrap">
+        <div class="semantle-table-header">
+          <span>#</span>
+          <span>Слово</span>
+          <span>Близькість</span>
+          <span>Статус</span>
+        </div>
+        <div class="semantle-table-body" id="semantleTableBody"></div>
+      </div>
+
+      <div class="semantle-finish-box hidden" id="semantleFinishBox">
+        <button class="physical-btn btn-semantle-accent" id="btnNextSemantleWord">Загадати нове слово</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Модальне вікно -->
   <div class="modal-overlay" id="resultModal">
     <div class="modal-card" id="modalCard">
       <h2 class="modal-title" id="modalTitle">Перемога!</h2>

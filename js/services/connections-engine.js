@@ -13,7 +13,7 @@ export class ConnectionsEngine {
     this.previousGuesses = new Set();
     this.isGameOver = false;
     this.isWin = false;
-    this.hintClicksCount = 0; // Лічильник натискань на підказку
+    this.hintClicksCount = 0;
   }
 
   startNewGame(puzzleIdx = null) {
@@ -36,6 +36,7 @@ export class ConnectionsEngine {
 
     const flatTiles = [];
     this.currentPuzzle.groups.forEach((group, gIdx) => {
+      // Підтримка обох назв масивів: items або words
       const wordsList = group.items || group.words || [];
       wordsList.forEach((text, iIdx) => {
         flatTiles.push({
@@ -126,7 +127,7 @@ export class ConnectionsEngine {
         items: selectedTiles
       });
       this.selectedIds = [];
-      this.hintClicksCount = 0; // Скидаємо лічильник для наступної групи
+      this.hintClicksCount = 0;
 
       if (this.solvedGroups.length === this.currentPuzzle.groups.length) {
         this.isGameOver = true;
@@ -155,7 +156,6 @@ export class ConnectionsEngine {
     }
   }
 
-  // Прогресивна підказка: конкретизується кожні 5 натискань
   getGentleHint() {
     if (!this.currentPuzzle || this.isGameOver) return null;
 
@@ -170,7 +170,6 @@ export class ConnectionsEngine {
     const targetGroup = unsolved[0];
     const words = targetGroup.items || targetGroup.words || [];
 
-    // Рівень 1: 1–4 кліки — лише назва теми
     if (this.hintClicksCount < 5) {
       return {
         level: 1,
@@ -179,16 +178,14 @@ export class ConnectionsEngine {
       };
     }
 
-    // Рівень 2: 5–9 кліків — розкриваємо 1 слово з групи
     if (this.hintClicksCount < 10) {
       return {
         level: 2,
         clicks: this.hintClicksCount,
-        text: `До теми «${targetGroup.title}» точно належить слово: [ ${words[0]} ]`
+        text: `До теми «${targetGroup.title}» належить слово: [ ${words[0]} ]`
       };
     }
 
-    // Рівень 3: 10–14 кліків — розкриваємо вже 2 слова
     if (this.hintClicksCount < 15) {
       return {
         level: 3,
@@ -197,7 +194,6 @@ export class ConnectionsEngine {
       };
     }
 
-    // Рівень 4: 15+ кліків — пряма майже повна комбінація
     return {
       level: 4,
       clicks: this.hintClicksCount,

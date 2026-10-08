@@ -18,18 +18,21 @@ export class StorageService {
         categories: { played: 0, wins: 0, bestRatio: 0 },
         chain: { played: 0, highScore: 0 },
         connections: { played: 0, wins: 0 },
+        semantle: { played: 0, wins: 0, bestGuesses: 999 },
         recentSessions: []
       };
     }
     try {
       const stats = JSON.parse(raw);
       if (!stats.connections) stats.connections = { played: 0, wins: 0 };
+      if (!stats.semantle) stats.semantle = { played: 0, wins: 0, bestGuesses: 999 };
       return stats;
     } catch (e) {
       return {
         categories: { played: 0, wins: 0, bestRatio: 0 },
         chain: { played: 0, highScore: 0 },
         connections: { played: 0, wins: 0 },
+        semantle: { played: 0, wins: 0, bestGuesses: 999 },
         recentSessions: []
       };
     }
@@ -78,6 +81,25 @@ export class StorageService {
     stats.recentSessions.unshift({
       title: "Код Чотирьох",
       scoreText: isWin ? "4/4 (Зламано)" : `${solvedCount}/4 груп`,
+      date: new Date().toLocaleDateString("uk-UA", { hour: "2-digit", minute: "2-digit" })
+    });
+    stats.recentSessions = stats.recentSessions.slice(0, 5);
+    this.saveStats(stats);
+  }
+
+  static recordSemantleResult(isWin, guessCount) {
+    const stats = this.getStats();
+    stats.semantle.played += 1;
+    if (isWin) {
+      stats.semantle.wins += 1;
+      if (guessCount < stats.semantle.bestGuesses) {
+        stats.semantle.bestGuesses = guessCount;
+      }
+    }
+
+    stats.recentSessions.unshift({
+      title: "Тепліше-Холодніше",
+      scoreText: isWin ? `Вгадано (${guessCount} спр.)` : "Здався",
       date: new Date().toLocaleDateString("uk-UA", { hour: "2-digit", minute: "2-digit" })
     });
     stats.recentSessions = stats.recentSessions.slice(0, 5);

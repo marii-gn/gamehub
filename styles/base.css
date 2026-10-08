@@ -18,11 +18,11 @@ body {
   position: relative;
 }
 
-/* Ідеальне центрування ігрових екранів */
 .game-hub-container,
 .machine-wrapper,
 .chain-game-wrapper,
-.conn-game-wrapper {
+.conn-game-wrapper,
+.semantle-game-wrapper {
   margin: auto;
 }
 

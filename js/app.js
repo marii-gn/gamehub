@@ -3,22 +3,25 @@ import { CONNECTIONS_PUZZLES } from "./data/connections.js";
 import { GameEngine } from "./services/game-engine.js";
 import { ChainEngine } from "./services/chain-engine.js";
 import { ConnectionsEngine } from "./services/connections-engine.js";
+import { SemantleEngine } from "./services/semantle-engine.js";
 import { StorageService } from "./services/storage.js";
 import { GameView } from "./ui/view.js";
 import { BackgroundAnimation } from "./ui/background.js";
 import { ConstellationAnimation } from "./ui/constellation.js";
 import { ClusterBgAnimation } from "./ui/cluster-bg.js";
+import { ThermalBgAnimation } from "./ui/thermal-bg.js";
 
 class App {
   constructor() {
     this.catEngine = new GameEngine(MASTER_CATEGORIES);
     this.chainEngine = new ChainEngine();
     this.connEngine = new ConnectionsEngine(CONNECTIONS_PUZZLES);
+    this.semantleEngine = new SemantleEngine();
     this.view = new GameView();
 
     this.bgCloud = new BackgroundAnimation("wordCloud", CLOUD_WORDS, (word) => {
       const catInput = document.getElementById("wordInput");
-      if (catInput && !this.view.elements.categoriesScreen.classList.contains("hidden")) {
+      if (catInput && !this.view.elements.categoriesScreen?.classList.contains("hidden")) {
         catInput.value = word;
         catInput.focus();
       }
@@ -26,21 +29,29 @@ class App {
 
     this.bgConstellation = new ConstellationAnimation("constellationBg");
     this.bgCluster = new ClusterBgAnimation("clusterBg");
+    this.bgThermal = new ThermalBgAnimation("thermalBg");
   }
 
   init() {
-    this.bgCloud.init();
-    this.bgConstellation.init();
-    this.bgCluster.init();
+    try {
+      this.bgCloud?.init();
+      this.bgConstellation?.init();
+      this.bgCluster?.init();
+      this.bgThermal?.init();
 
-    this.initUserSession();
-    this.initDragAndDrop();
-    this.bindNavigationEvents();
-    this.bindCategoriesEvents();
-    this.bindChainEvents();
-    this.bindConnectionsEvents();
+      this.initUserSession();
+      this.initDragAndDrop();
+      this.bindNavigationEvents();
+      this.bindCategoriesEvents();
+      this.bindChainEvents();
+      this.bindConnectionsEvents();
+      this.bindSemantleEvents();
 
-    this.openHub();
+      this.openHub();
+    } catch (err) {
+      console.error("Помилка ініціалізації:", err);
+      document.getElementById("hubScreen")?.classList.remove("hidden");
+    }
   }
 
   initUserSession() {
@@ -54,8 +65,9 @@ class App {
   }
 
   stopAllBackgrounds() {
-    this.bgConstellation.stop();
-    this.bgCluster.setCubesMode(false);
+    this.bgConstellation?.stop();
+    this.bgThermal?.stop();
+    this.bgCluster?.setCubesMode(false);
   }
 
   openHub() {
@@ -77,18 +89,30 @@ class App {
   openChain() {
     this.stopAllBackgrounds();
     this.view.showScreen("chain");
-    this.bgConstellation.start();
+    this.bgConstellation?.start();
     this.chainEngine.startNewGame();
     this.view.renderChainBoard(this.chainEngine);
   }
 
   openConnections() {
     this.stopAllBackgrounds();
-    this.bgCluster.setCubesMode(true);
+    this.bgCluster?.setCubesMode(true);
     this.view.showScreen("connections");
     this.connEngine.startNewGame();
     this.view.hideConnHint();
     this.view.renderConnectionsBoard(this.connEngine);
+  }
+
+  openSemantle() {
+    this.stopAllBackgrounds();
+    this.bgThermal?.start();
+    this.view.showScreen("semantle");
+    this.semantleEngine.startNewGame();
+    this.view.renderSemantleBoard(this.semantleEngine);
+    if (this.view.elements.semantleWordInput) {
+      this.view.elements.semantleWordInput.value = "";
+      this.view.elements.semantleWordInput.focus();
+    }
   }
 
   syncCategoriesUI() {
@@ -110,12 +134,14 @@ class App {
         if (game === "categories") this.openCategories();
         else if (game === "chain") this.openChain();
         else if (game === "connections") this.openConnections();
+        else if (game === "semantle") this.openSemantle();
       });
     });
 
     document.getElementById("btnPlayCategories")?.addEventListener("click", () => this.openCategories());
     document.getElementById("btnPlayChain")?.addEventListener("click", () => this.openChain());
     document.getElementById("btnPlayConnections")?.addEventListener("click", () => this.openConnections());
+    document.getElementById("btnPlaySemantle")?.addEventListener("click", () => this.openSemantle());
   }
 
   initDragAndDrop() {
@@ -137,7 +163,6 @@ class App {
     });
   }
 
-  // --- ТАЄМНІ КАТЕГОРІЇ ---
   bindCategoriesEvents() {
     document.getElementById("modeFriendBtn")?.addEventListener("click", () => {
       if (this.catEngine.mode === "friend") return;
@@ -285,7 +310,6 @@ class App {
     });
   }
 
-  // --- ЛАНЦЮГ СЛІВ ---
   bindChainEvents() {
     const track = this.view.elements.chainTrack;
     if (!track) return;
@@ -359,7 +383,7 @@ class App {
         true,
         `Рахунок: ${finalScore} / 100 б.`,
         () => {},
-        "ти розумничок! ти склав ланцюжок без помилок!",
+        "ти розумничок",
         `Вітаємо, ${StorageService.getUserName()}! Всі ланки ланцюга складено успішно.`
       );
     }
@@ -367,7 +391,6 @@ class App {
     this.view.renderChainBoard(this.chainEngine);
   }
 
-  // --- КОД ЧОТИРЬОХ (4x4) ---
   bindConnectionsEvents() {
     this.view.elements.connGrid?.addEventListener("click", (e) => {
       const card = e.target.closest(".conn-card");
@@ -382,12 +405,10 @@ class App {
       this.view.renderConnectionsBoard(this.connEngine);
     });
 
-    // Підказка з прогресивною конкретизацією
     this.view.elements.btnConnHint?.addEventListener("click", () => {
       const hintData = this.connEngine.getGentleHint();
       if (hintData) {
         this.view.showConnHint(hintData.text);
-        
         let hintNotice = `Підказка (${hintData.clicks})`;
         if (hintData.level === 2) hintNotice = "Рівень 2: Відкрито одне ключове слово!";
         else if (hintData.level === 3) hintNotice = "Рівень 3: Відкрито пару ключових слів!";
@@ -458,6 +479,75 @@ class App {
 
     this.view.elements.btnNextCode?.addEventListener("click", () => {
       this.openConnections();
+    });
+  }
+
+  bindSemantleEvents() {
+    const handleSemantleGuess = () => {
+      const input = this.view.elements.semantleWordInput;
+      if (!input) return;
+      const text = input.value.trim();
+      if (!text) return;
+
+      const res = this.semantleEngine.submitGuess(text);
+
+      if (res.status === "empty") return;
+
+      if (res.status === "already_guessed") {
+        this.view.setSemantleFeedback(`Слово «${res.word}» уже було у спробах!`);
+        input.value = "";
+        return;
+      }
+
+      input.value = "";
+      input.focus();
+      this.view.renderSemantleBoard(this.semantleEngine);
+
+      if (res.status === "win") {
+        StorageService.recordSemantleResult(true, this.semantleEngine.guesses.length);
+        this.view.showModal(
+          true,
+          `Секретне слово: ${res.entry.word.toUpperCase()}`,
+          () => {},
+          "ти супер, я в тебе не вірила",
+          `Ви точно визначили семантичний центр за ${this.semantleEngine.guesses.length} спроб!`
+        );
+      }
+    };
+
+    this.view.elements.btnSemantleGuess?.addEventListener("click", handleSemantleGuess);
+
+    this.view.elements.semantleWordInput?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSemantleGuess();
+      }
+    });
+
+    this.view.elements.btnSemantleHint?.addEventListener("click", () => {
+      const hint = this.semantleEngine.getHint();
+      if (hint) {
+        this.view.setSemantleFeedback(`Орієнтир: слово «${hint.word}» має схожість ${hint.similarity.toFixed(2)}%`);
+      }
+    });
+
+    this.view.elements.btnSemantleSurrender?.addEventListener("click", () => {
+      if (confirm("Здатися та подивитися загадане слово?")) {
+        const secret = this.semantleEngine.giveUp();
+        StorageService.recordSemantleResult(false, this.semantleEngine.guesses.length);
+        this.view.renderSemantleBoard(this.semantleEngine);
+        this.view.showModal(
+          false,
+          `Загадане слово: ${secret.toUpperCase()}`,
+          () => {},
+          "Слово розкрито!",
+          "Спробуйте свої сили в новому раунді!"
+        );
+      }
+    });
+
+    this.view.elements.btnNextSemantleWord?.addEventListener("click", () => {
+      this.openSemantle();
     });
   }
 }

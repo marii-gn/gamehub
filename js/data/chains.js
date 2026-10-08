@@ -657,4 +657,5 @@ export const MASTER_CHAINS = [
       { target: "зрілості", transition: "зрілості" }
     ]
   }
+  
 ];
