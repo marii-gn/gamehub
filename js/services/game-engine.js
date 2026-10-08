@@ -2,7 +2,7 @@ export class GameEngine {
   constructor(categories = []) {
     this.allCategories = categories;
     this.deck = [];
-    this.mode = "friend"; // 'friend' або 'solo'
+    this.mode = "friend";
     this.currentPlayer = 1;
     this.p1Category = null;
     this.p2Category = null;
@@ -46,26 +46,20 @@ export class GameEngine {
     this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
   }
 
-  // Якщо черга Гравця 1 -> ціль Гравець 2 (p2Category)
-  // Якщо черга Гравця 2 -> ціль Гравець 1 (p1Category)
-  // Якщо соло -> ціль Бот (p2Category)
   getTargetCategory() {
     if (this.mode === "solo") return this.p2Category;
     return this.currentPlayer === 1 ? this.p2Category : this.p1Category;
   }
 
-  // Номер гравця-суперника, чию категорію зараз відгадують
   getTargetPlayerNumber() {
     if (this.mode === "solo") return 2;
     return this.currentPlayer === 1 ? 2 : 1;
   }
 
-  // Секретна умова гравця, чия зараз черга (для кнопки "Підглянути")
   getCurrentPlayerCategory() {
     return this.currentPlayer === 1 ? this.p1Category : this.p2Category;
   }
 
-  // Гравець відгадує слово під умову супротивника, тому слово записується в історію супротивника
   addWord(text, isMatch) {
     const entry = { text, isMatch, time: Date.now() };
     const target = this.getTargetPlayerNumber();
@@ -75,6 +69,12 @@ export class GameEngine {
     } else {
       this.wordsP2.push(entry);
     }
+  }
+
+  // Проверка, вводилось ли слово ранее боту
+  hasWordBeenAsked(text) {
+    const normalized = text.trim().toLowerCase();
+    return this.wordsP2.some((entry) => entry.text.trim().toLowerCase() === normalized);
   }
 
   submitWordToBot(text) {

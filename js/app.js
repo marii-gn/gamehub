@@ -213,6 +213,21 @@ class App {
       const text = inputEl ? inputEl.value.trim().toLowerCase() : "";
       if (!text) return;
 
+      // Проверка на повторно введенное слово
+      if (this.catEngine.hasWordBeenAsked(text)) {
+        this.view.showModal(
+          false,
+          null,
+          () => {
+            inputEl.focus();
+            inputEl.select();
+          },
+          "Слово вже було!",
+          `Ви вже перевіряли слово «${text}». Спробуйте інше!`
+        );
+        return;
+      }
+
       this.catEngine.submitWordToBot(text);
       this.view.clearCategoriesInputs();
       this.syncCategoriesUI();
@@ -277,7 +292,6 @@ class App {
     const track = this.view.elements.chainTrack;
     if (!track) return;
 
-    // 1. Автоперехід на наступну клітинку при вводі букви
     track.addEventListener("input", (e) => {
       if (e.target && e.target.classList.contains("chain-cell-input")) {
         const input = e.target;
@@ -291,7 +305,6 @@ class App {
       }
     });
 
-    // 2. Клавіші Backspace та Enter
     track.addEventListener("keydown", (e) => {
       if (e.target && e.target.classList.contains("chain-cell-input")) {
         const input = e.target;
@@ -317,7 +330,6 @@ class App {
     });
   }
 
-  // Збирання літер з клітинок активного рядка
   submitChainWordFromCells() {
     const row = document.getElementById("activeCellsRow");
     if (!row) return;
