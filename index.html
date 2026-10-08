@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ігровий Термінал</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+
+  <!-- ФОНОВА ХМАРА СЛІВ -->
+  <div class="word-cloud-bg" id="wordCloud"></div>
+
+  <!-- ВЕРХНЯ НАВІГАЦІЙНА ПАНЕЛЬ -->
+  <header class="top-nav-bar" id="topNavBar">
+    <div class="nav-left">
+      <button class="nav-hub-btn" id="btnNavHub">Головне Меню</button>
+      <div class="nav-games-menu">
+        <button class="nav-game-tab" data-game="categories">Таємні Категорії</button>
+        <button class="nav-game-tab" data-game="chain">Ланцюг Слів</button>
+      </div>
+    </div>
+    
+    <div class="nav-user-panel">
+      <span class="user-badge-label">Гравець:</span>
+      <input type="text" class="user-name-input" id="userNameInput" placeholder="Введіть ім'я..." maxlength="18">
+    </div>
+  </header>
+
+  <!-- ==================== ЕКРАН 1: ГОЛОВНЕ МЕНЮ ==================== -->
+  <section class="game-hub-container" id="hubScreen">
+    <div class="hub-header">
+      <div class="hub-tag">Cyber Terminal // Gaming Platform</div>
+      <h1 class="hub-title">Ігровий Хаб</h1>
+      <p class="hub-subtitle">Обирайте лінгвістичний режим, тренуйте логіку та встановлюйте рекорди</p>
+    </div>
+
+    <!-- Список ігор -->
+    <div class="hub-grid">
+      <!-- Картка 1: Таємні категорії -->
+      <article class="hub-card" id="cardSecretCategories">
+        <div class="hub-card-indicator" style="--c: var(--cyan);"></div>
+        <div class="hub-card-meta">2 Гравці / Бот • Дедукція</div>
+        <h2 class="hub-card-title">Таємні Категорії</h2>
+        <p class="hub-card-desc">Розгадайте приховану умову суперника за допомогою перевірочних слів, асоціативних та векторних підказок.</p>
+        
+        <div class="hub-card-stats" id="statsCategoriesCard"></div>
+
+        <button class="physical-btn hub-play-btn" id="btnPlayCategories">Грати в Категорії</button>
+      </article>
+
+      <!-- Картка 2: Ланцюг Слів -->
+      <article class="hub-card" id="cardWordChain">
+        <div class="hub-card-indicator" style="--c: var(--green);"></div>
+        <div class="hub-card-meta">Соло • 100 Балів • Фразеологія</div>
+        <h2 class="hub-card-title">Ланцюг Слів</h2>
+        <p class="hub-card-desc">Складайте неперервні словосполучення від стартового до фінішного слова, відкриваючи мінімум штрафних літер.</p>
+        
+        <div class="hub-card-stats" id="statsChainCard"></div>
+
+        <button class="physical-btn hub-play-btn btn-chain-accent" id="btnPlayChain">Грати в Ланцюг Слів</button>
+      </article>
+    </div>
+
+    <!-- Історія останніх сесій -->
+    <section class="recent-sessions-box">
+      <h3 class="recent-sessions-title">Останні ігрові сесії</h3>
+      <div class="recent-sessions-list" id="recentSessionsList"></div>
+    </section>
+  </section>
+
+  <!-- ==================== ЕКРАН 2: ТАЄМНІ КАТЕГОРІЇ ==================== -->
+  <main class="machine-wrapper hidden" id="categoriesScreen">
+    <!-- Лівий блок: Гравець 1 -->
+    <section class="module-plate col-p1" id="colP1">
+      <header class="module-header">
+        <div><span class="led-indicator"></span><span class="player-p1-text">Гравець 1</span></div>
+        <div class="score-counter" id="countP1">00</div>
+      </header>
+      <div class="tape-list" id="listP1"></div>
+    </section>
+
+    <!-- Центр керування -->
+    <section class="module-plate center-sector">
+      <div class="mode-rack">
+        <button class="mode-tab active" id="modeFriendBtn">Дуель</button>
+        <button class="mode-tab" id="modeSoloBtn">Бот / Соло</button>
+      </div>
+
+      <div class="device-title">
+        <h1>Таємні Категорії</h1>
+        <span id="playerLabel">Черга: Гравець 1</span>
+      </div>
+
+      <div class="vault-box locked" id="vaultBox">
+        <div class="vault-status" id="vaultStatus">Секретна умова захищена</div>
+        <div class="vault-content" id="vaultContent">[ ТРИМАЙТЕ ДЛЯ ПЕРЕГЛЯДУ ]</div>
+      </div>
+
+      <div class="controls-grid">
+        <button class="physical-btn btn-hold" id="peekBtn">Підглянути</button>
+        <button class="physical-btn" id="nextBtn">Передати хід</button>
+      </div>
+
+      <!-- Підказки -->
+      <section class="intel-sector">
+        <div class="intel-bar">
+          <span id="intelHeader">Розвідка умови супротивника</span>
+        </div>
+        <div class="intel-btns">
+          <button class="intel-btn" id="btnHint1">Асоціація (лайт)</button>
+          <button class="intel-btn" id="btnHint2">Вектор (глибше)</button>
+        </div>
+        <div class="intel-screen" id="intelScreen">Підказки відключені</div>
+      </section>
+
+      <!-- Введення слова-перевірки -->
+      <div class="input-console">
+        <input type="text" class="terminal-input" id="wordInput" placeholder="Введіть або перетягніть слово сюди..." autocomplete="off">
+        
+        <div class="verdict-grid" id="duelButtons">
+          <button class="physical-btn btn-accept" id="btnYes">Підходить</button>
+          <button class="physical-btn btn-reject" id="btnNo">Не підходить</button>
+        </div>
+
+        <button class="physical-btn btn-ask-bot hidden" id="btnAskBot">Запитати бота [Enter]</button>
+      </div>
+
+      <!-- Блок відгадування категорії бота -->
+      <div class="guess-box hidden" id="guessBox">
+        <span class="guess-label">Фінальний здогад категорії:</span>
+        <input type="text" class="terminal-input" id="guessInput" placeholder="Яка суть категорії бота?..." autocomplete="off">
+        <button class="physical-btn btn-submit-guess" id="btnSubmitGuess">Назвати категорію</button>
+      </div>
+
+      <button class="footer-reset" id="resetBtn">Скинути поточну сесію</button>
+    </section>
+
+    <!-- Правий блок: Гравець 2 / Бот -->
+    <section class="module-plate col-p2" id="colP2">
+      <header class="module-header">
+        <div><span class="led-indicator"></span><span id="colP2Title" class="player-p2-text">Гравець 2</span></div>
+        <div class="score-counter" id="countP2">00</div>
+      </header>
+      <div class="tape-list" id="listP2"></div>
+    </section>
+  </main>
+
+  <!-- ==================== ЕКРАН 3: ЛАНЦЮГ СЛІВ ==================== -->
+  <main class="chain-game-wrapper hidden" id="chainScreen">
+    <section class="module-plate chain-panel">
+      <header class="chain-header">
+        <div>
+          <div class="hub-tag">Словосполучення</div>
+          <h2 class="chain-title">Ланцюг Слів</h2>
+        </div>
+        <div class="chain-score-cluster">
+          <span class="chain-score-label">РАХУНОК</span>
+          <span class="chain-score-val" id="chainTotalScore">100</span>
+          <span class="chain-score-max">/ 100</span>
+        </div>
+      </header>
+
+      <!-- 7 ланок ланцюжка -->
+      <div class="chain-track" id="chainTrack"></div>
+
+      <!-- Інтерактивна зона відповіді -->
+      <div class="chain-input-block" id="chainInputBlock">
+        <div class="chain-hint-info">
+          <span>Словосполучення: </span>
+          <strong id="chainActivePrompt" class="text-accent">Рідний + [?]</strong>
+          <span class="chain-potential-pts" id="chainWordPotential">(+20 балів)</span>
+        </div>
+
+        <div class="chain-input-row">
+          <input type="text" class="terminal-input" id="chainWordInput" placeholder="Введіть слово продовження..." autocomplete="off">
+          <button class="physical-btn btn-accept" id="chainBtnSubmit">Перевірити</button>
+        </div>
+
+        <div class="chain-letter-slots" id="chainLetterSlots"></div>
+        <div class="chain-feedback" id="chainFeedbackMsg"></div>
+      </div>
+
+      <!-- Завершення ланцюжка -->
+      <div class="chain-finish-controls hidden" id="chainFinishControls">
+        <button class="physical-btn btn-chain-accent" id="btnNextChain">Наступний Ланцюжок</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- Модальне вікно фіналу -->
+  <div class="modal-overlay" id="resultModal">
+    <div class="modal-card" id="modalCard">
+      <h2 class="modal-title" id="modalTitle">Перемога!</h2>
+      <p class="modal-desc" id="modalDesc"></p>
+      <div class="modal-target" id="modalTarget"></div>
+      <button class="physical-btn modal-btn" id="modalBtn">Продовжити</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+:root {
+  --bg: #0c0e14;
+  --plate: #151821;
+  --plate-border: #222736;
+  --plate-highlight: #2b3145;
+  --accent: #f59e0b;
+  --cyan: #38bdf8;
+  --purple: #c084fc;
+  --green: #2dd4bf;
+  --red: #fb7185;
+  --text: #f1f5f9;
+  --text-dim: #64748b;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Chakra Petch', sans-serif;
+}
