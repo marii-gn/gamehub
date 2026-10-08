@@ -31,7 +31,7 @@ class App {
   init() {
     this.bgCloud.init();
     this.bgConstellation.init();
-    this.bgCluster.init(); // Сітка активна постійно на фоні
+    this.bgCluster.init();
 
     this.initUserSession();
     this.initDragAndDrop();
@@ -55,7 +55,6 @@ class App {
 
   stopAllBackgrounds() {
     this.bgConstellation.stop();
-    // Вимикаємо політ кубиків для всіх інших екранів (залишається лише сітка)
     this.bgCluster.setCubesMode(false);
   }
 
@@ -85,7 +84,6 @@ class App {
 
   openConnections() {
     this.stopAllBackgrounds();
-    // Вмикаємо літаючі кубики ТІЛЬКИ в режимі «Код Чотирьох»
     this.bgCluster.setCubesMode(true);
     this.view.showScreen("connections");
     this.connEngine.startNewGame();
@@ -252,8 +250,10 @@ class App {
         () => {
           if (isWin) this.openCategories();
         },
-        isWin ? "Перемога!" : "Спробуй ще!",
-        isWin ? `Гравець ${StorageService.getUserName()} розгадав категорію!` : "Умова не розгадана. Продовжуйте пошук слів!"
+        isWin ? "ти молодець, а бот тупий" : "Спробуй ще!",
+        isWin
+          ? `Гравець ${StorageService.getUserName()} блискуче розгадав категорію!`
+          : "Умова не розгадана. Продовжуйте пошук слів!"
       );
       if (guessInput) guessInput.value = "";
     };
@@ -359,8 +359,8 @@ class App {
         true,
         `Рахунок: ${finalScore} / 100 б.`,
         () => {},
-        "ти супер, я в тебе не вірила",
-        `Вітаємо, ${StorageService.getUserName()}! Всі словосполучення складено ідеально.`
+        "ти розумничок",
+        `Вітаємо, ${StorageService.getUserName()}! Всі ланки ланцюга складено успішно.`
       );
     }
 
@@ -382,11 +382,18 @@ class App {
       this.view.renderConnectionsBoard(this.connEngine);
     });
 
+    // Підказка з прогресивною конкретизацією
     this.view.elements.btnConnHint?.addEventListener("click", () => {
-      const hint = this.connEngine.getGentleHint();
-      if (hint) {
-        this.view.showConnHint(hint);
-        this.view.setConnFeedback("Система проаналізувала один із кластерів", "warning");
+      const hintData = this.connEngine.getGentleHint();
+      if (hintData) {
+        this.view.showConnHint(hintData.text);
+        
+        let hintNotice = `Підказка (${hintData.clicks})`;
+        if (hintData.level === 2) hintNotice = "Рівень 2: Відкрито одне ключове слово!";
+        else if (hintData.level === 3) hintNotice = "Рівень 3: Відкрито пару ключових слів!";
+        else if (hintData.level === 4) hintNotice = "Максимальна підказка: майже повний розв'язок!";
+
+        this.view.setConnFeedback(hintNotice, "warning");
       }
     });
 
@@ -400,6 +407,15 @@ class App {
 
       if (res.status === "incomplete") {
         this.view.setConnFeedback("Оберіть рівно 4 картки!", "warning");
+      } else if (res.status === "already_guessed") {
+        this.view.showModal(
+          false,
+          null,
+          () => {},
+          "Нєнє, вже обирав!",
+          "Цю четвірку ти вже відправляв, вона хибна. Спробу збережено, зміни картки!"
+        );
+        this.view.setConnFeedback("Цю комбінацію вже тестували!", "warning");
       } else if (res.status === "correct") {
         this.view.setConnFeedback(`Кластер розкрито: ${res.group.title}!`, "success");
         this.view.hideConnHint();
@@ -415,7 +431,7 @@ class App {
             this.view.renderFullConnectionsSolution(allSolved);
           },
           "ти супер, я в тебе не вірила",
-          `Вітаємо, ${StorageService.getUserName()}! Усі 4 приховані групи знайдено.`
+          `Вітаємо, ${StorageService.getUserName()}! Усі 4 групи розгадано.`
         );
       } else if (res.status === "wrong") {
         if (res.oneAway) {

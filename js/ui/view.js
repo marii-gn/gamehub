@@ -151,7 +151,6 @@ export class GameView {
     }
   }
 
-  // --- РЕНДЕР КАТЕГОРІЙ ---
   renderCategoriesMode(mode, currentPlayer, targetPlayer) {
     const isSolo = mode === "solo";
     this.elements.categoriesScreen?.classList.toggle("solo-mode", isSolo);
@@ -168,11 +167,9 @@ export class GameView {
       this.elements.btnAskBot?.classList.remove("hidden");
       this.elements.guessBox?.classList.remove("hidden");
 
-      // ПРИБИРАЄМО МОЖЛИВІСТЬ РОЗКРИТТЯ АБО ПІДГЛЯДАННЯ В СОЛО-РЕЖИМІ
       this.elements.peekBtn?.classList.add("hidden");
       this.elements.nextBtn?.classList.add("hidden");
       
-      // Замикаємо сейф і ховаємо текст
       this.elements.vaultBox?.classList.add("locked");
       if (this.elements.vaultStatus) this.elements.vaultStatus.textContent = "Умова бота закодована";
       if (this.elements.vaultContent) this.elements.vaultContent.textContent = "[ ЗДОГАДАЙТЕСЯ ЗА СЛОВАМИ ]";
@@ -188,7 +185,6 @@ export class GameView {
       this.elements.btnAskBot?.classList.add("hidden");
       this.elements.guessBox?.classList.add("hidden");
 
-      // Повертаємо кнопки для режиму дуелі двох гравців
       this.elements.peekBtn?.classList.remove("hidden");
       this.elements.nextBtn?.classList.remove("hidden");
       if (this.elements.nextBtn) this.elements.nextBtn.textContent = "Передати хід";
@@ -198,16 +194,25 @@ export class GameView {
     }
   }
 
+  // Сортування: зелені (isMatch === true) зверху, червоні (isMatch === false) знизу
   renderHistory(wordsP1 = [], wordsP2 = []) {
     const renderList = (container, words) => {
       if (!container) return;
-      container.innerHTML = [...words].sort((a,b) => b.time - a.time).map(w => `
+      const sortedWords = [...words].sort((a, b) => {
+        if (a.isMatch !== b.isMatch) {
+          return a.isMatch ? -1 : 1; // Правильні нагору
+        }
+        return b.time - a.time; // Новіші вище всередині своєї групи
+      });
+
+      container.innerHTML = sortedWords.map(w => `
         <div class="tape-item ${w.isMatch ? "match" : "no-match"}">
           <span>${w.text}</span>
           <span style="font-size: 0.7rem; font-weight: 700;">${w.isMatch ? "ТАК" : "НІ"}</span>
         </div>
       `).join("");
     };
+
     renderList(this.elements.listP1, wordsP1);
     renderList(this.elements.listP2, wordsP2);
     if (this.elements.countP1) this.elements.countP1.textContent = GameView.padCount(wordsP1.length);
@@ -238,7 +243,6 @@ export class GameView {
     }
   }
 
-  // --- РЕНДЕР ЛАНЦЮГА СЛІВ ---
   renderChainBoard(engine) {
     const { items, targetIndex, solvedWords, revealedLetters, isFinished } = engine;
     this.elements.chainTotalScore.textContent = engine.totalScore;
@@ -335,7 +339,6 @@ export class GameView {
     }, 2400);
   }
 
-  // --- РЕНДЕР КОДУ ЧОТИРЬОХ ---
   renderConnectionsBoard(engine) {
     if (this.elements.connLivesDots) {
       let dotsHtml = "";
