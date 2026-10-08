@@ -53,7 +53,7 @@
         
         <div class="hub-card-stats" id="statsCategoriesCard"></div>
 
-        <button class="physical-btn hub-play-btn" id="btnPlayCategories">Грати в Категорії</button>
+        <button class="physical-btn hub-play-btn btn-categories-accent" id="btnPlayCategories">Грати в Категорії</button>
       </article>
 
       <!-- Картка 2: Ланцюг Слів -->
@@ -171,20 +171,13 @@
       <!-- 7 ланок ланцюжка -->
       <div class="chain-track" id="chainTrack"></div>
 
-      <!-- Інтерактивна зона відповіді -->
-      <div class="chain-input-block" id="chainInputBlock">
+      <!-- Нижня інформативна зона -->
+      <div class="chain-hint-bar" id="chainHintBar">
         <div class="chain-hint-info">
           <span>Словосполучення: </span>
           <strong id="chainActivePrompt" class="text-accent">Рідний + [?]</strong>
           <span class="chain-potential-pts" id="chainWordPotential">(+20 балів)</span>
         </div>
-
-        <div class="chain-input-row">
-          <input type="text" class="terminal-input" id="chainWordInput" placeholder="Введіть слово продовження..." autocomplete="off">
-          <button class="physical-btn btn-accept" id="chainBtnSubmit">Перевірити</button>
-        </div>
-
-        <div class="chain-letter-slots" id="chainLetterSlots"></div>
         <div class="chain-feedback" id="chainFeedbackMsg"></div>
       </div>
 

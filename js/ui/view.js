@@ -1,7 +1,6 @@
 export class GameView {
   constructor() {
     this.elements = {
-      // Навігація та Екрани
       topNavBar: document.getElementById("topNavBar"),
       btnNavHub: document.getElementById("btnNavHub"),
       navGameTabs: document.querySelectorAll(".nav-game-tab"),
@@ -10,12 +9,10 @@ export class GameView {
       categoriesScreen: document.getElementById("categoriesScreen"),
       chainScreen: document.getElementById("chainScreen"),
 
-      // Хаб: Статистика
       statsCategoriesCard: document.getElementById("statsCategoriesCard"),
       statsChainCard: document.getElementById("statsChainCard"),
       recentSessionsList: document.getElementById("recentSessionsList"),
 
-      // Таємні Категорії
       colP1: document.getElementById("colP1"),
       colP2: document.getElementById("colP2"),
       colP2Title: document.getElementById("colP2Title"),
@@ -39,20 +36,15 @@ export class GameView {
       modeFriendBtn: document.getElementById("modeFriendBtn"),
       modeSoloBtn: document.getElementById("modeSoloBtn"),
 
-      // Ланцюг Слів
       chainTrack: document.getElementById("chainTrack"),
       chainTotalScore: document.getElementById("chainTotalScore"),
       chainActivePrompt: document.getElementById("chainActivePrompt"),
       chainWordPotential: document.getElementById("chainWordPotential"),
-      chainWordInput: document.getElementById("chainWordInput"),
-      chainBtnSubmit: document.getElementById("chainBtnSubmit"),
-      chainLetterSlots: document.getElementById("chainLetterSlots"),
       chainFeedbackMsg: document.getElementById("chainFeedbackMsg"),
-      chainInputBlock: document.getElementById("chainInputBlock"),
+      chainHintBar: document.getElementById("chainHintBar"),
       chainFinishControls: document.getElementById("chainFinishControls"),
       btnNextChain: document.getElementById("btnNextChain"),
 
-      // Модальне вікно
       modal: document.getElementById("resultModal"),
       modalCard: document.getElementById("modalCard"),
       modalTitle: document.getElementById("modalTitle"),
@@ -154,7 +146,6 @@ export class GameView {
     }
   }
 
-  // Таємні Категорії
   renderCategoriesMode(mode, currentPlayer, targetPlayer, isSoloRevealed) {
     const isSolo = mode === "solo";
     this.elements.categoriesScreen?.classList.toggle("solo-mode", isSolo);
@@ -247,7 +238,7 @@ export class GameView {
     }
   }
 
-  // Ланцюг Слів (З автоматичною трансформацією)
+  // Відмальовка ланок: введення БЕЗПОСЕРЕДНЬО В КЛІТИНКИ
   renderChainBoard(engine) {
     const { items, targetIndex, solvedWords, revealedLetters, isFinished } = engine;
     this.elements.chainTotalScore.textContent = engine.totalScore;
@@ -255,56 +246,99 @@ export class GameView {
     this.elements.chainTrack.innerHTML = items.map((item, idx) => {
       let stateClass = "locked-hidden";
       let badge = "Ланка " + (idx + 1);
-      let displayText = "• • • • •";
 
       if (idx === 0) {
         stateClass = "revealed-start";
         badge = "Старт";
-        displayText = engine.getDisplayWordForIndex(0);
+        return `
+          <div class="chain-node ${stateClass}">
+            <span class="chain-node-text">${engine.getDisplayWordForIndex(0)}</span>
+            <span class="chain-node-badge">${badge}</span>
+          </div>
+        `;
       } else if (idx === 6) {
         stateClass = "revealed-end";
         badge = "Фініш";
-        displayText = item.target; // Останнє слово відоме за правилами
+        return `
+          <div class="chain-node ${stateClass}">
+            <span class="chain-node-text">${item.target}</span>
+            <span class="chain-node-badge">${badge}</span>
+          </div>
+        `;
       } else if (solvedWords.includes(idx)) {
         stateClass = "solved";
         badge = "Відгадано";
-        displayText = engine.getDisplayWordForIndex(idx);
+        return `
+          <div class="chain-node ${stateClass}">
+            <span class="chain-node-text">${engine.getDisplayWordForIndex(idx)}</span>
+            <span class="chain-node-badge">${badge}</span>
+          </div>
+        `;
       } else if (idx === targetIndex) {
         stateClass = "active-target";
         badge = "Поточне";
         const targetWord = item.target;
         const revCount = revealedLetters[idx] || 1;
-        const visibleLetters = targetWord.slice(0, revCount);
-        const dots = " •".repeat(targetWord.length - revCount);
-        displayText = visibleLetters + dots;
+        const totalLen = targetWord.length;
+
+        // Генерація відкритих символів та інтерактивних інпутів для закритих
+        let cellsHtml = "";
+        for (let i = 0; i < totalLen; i++) {
+          if (i < revCount) {
+            cellsHtml += `<span class="chain-cell open-letter">${targetWord[i]}</span>`;
+          } else {
+            cellsHtml += `
+              <input 
+                type="text" 
+                maxlength="1" 
+                class="chain-cell-input" 
+                data-cell-idx="${i}" 
+                autocomplete="off"
+              >`;
+          }
+        }
+
+        return `
+          <div class="chain-node ${stateClass}">
+            <div class="chain-cells-row" id="activeCellsRow">
+              ${cellsHtml}
+            </div>
+            <span class="chain-node-badge">${badge}</span>
+          </div>
+        `;
+      }
+
+      // Закриті майбутні ланки — акуратні порожні квадратики
+      const wordLen = item.target.length;
+      let emptyCells = "";
+      for (let i = 0; i < wordLen; i++) {
+        emptyCells += `<span class="chain-cell locked-cell"></span>`;
       }
 
       return `
         <div class="chain-node ${stateClass}">
-          <span class="chain-node-text">${displayText}</span>
+          <div class="chain-cells-row">${emptyCells}</div>
           <span class="chain-node-badge">${badge}</span>
         </div>
       `;
     }).join("");
 
     if (isFinished) {
-      this.elements.chainInputBlock.classList.add("hidden");
+      this.elements.chainHintBar.classList.add("hidden");
       this.elements.chainFinishControls.classList.remove("hidden");
     } else {
-      this.elements.chainInputBlock.classList.remove("hidden");
+      this.elements.chainHintBar.classList.remove("hidden");
       this.elements.chainFinishControls.classList.add("hidden");
 
-      // Трансформована форма попереднього слова для точного словосполучення
       const prevWord = engine.getPreviousTransitionWord();
       this.elements.chainActivePrompt.textContent = `«${prevWord}» + [?]`;
       this.elements.chainWordPotential.textContent = `(+${engine.calculateCurrentWordPotential()} б.)`;
 
-      const currentWord = engine.getCurrentTargetWord();
-      const revCount = revealedLetters[targetIndex] || 1;
-      this.elements.chainLetterSlots.innerHTML = currentWord.split("").map((ch, i) => {
-        const isOpen = i < revCount;
-        return `<div class="chain-slot ${isOpen ? "open" : ""}">${isOpen ? ch : "?"}</div>`;
-      }).join("");
+      // Фокусуємося на першій доступній клітинці для введення
+      const firstInput = document.querySelector(".chain-cell-input");
+      if (firstInput) {
+        firstInput.focus();
+      }
     }
   }
 
@@ -331,9 +365,17 @@ export class GameView {
         ? "Категорію розгадано влучно!" 
         : "Не зовсім те. Продовжуй перевіряти слова!");
     }
+    
     if (this.elements.modalTarget) {
-      this.elements.modalTarget.textContent = categoryText ? `Результат: ${categoryText}` : "";
+      if (isWin && categoryText) {
+        this.elements.modalTarget.textContent = `Загадано: ${categoryText}`;
+        this.elements.modalTarget.classList.remove("hidden");
+      } else {
+        this.elements.modalTarget.textContent = "Умова залишається в таємниці";
+        this.elements.modalTarget.classList.remove("hidden");
+      }
     }
+
     if (this.elements.modalBtn) {
       this.elements.modalBtn.textContent = "Продовжити";
       this.elements.modalBtn.onclick = () => {
@@ -350,13 +392,6 @@ export class GameView {
     }
     if (this.elements.guessInput) {
       this.elements.guessInput.value = "";
-    }
-  }
-
-  clearChainInput() {
-    if (this.elements.chainWordInput) {
-      this.elements.chainWordInput.value = "";
-      this.elements.chainWordInput.focus();
     }
   }
 }

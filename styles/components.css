@@ -288,15 +288,38 @@
   width: 100%;
 }
 
+.btn-categories-accent {
+  background: linear-gradient(180deg, #132738 0%, #0c1824 100%) !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.45) !important;
+  color: var(--cyan) !important;
+  box-shadow: 0 4px 0 #060e17, 0 6px 14px rgba(0, 0, 0, 0.5) !important;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.45);
+  transition: all 0.2s ease !important;
+}
+
+.btn-categories-accent:hover {
+  background: linear-gradient(180deg, #18334a 0%, #0f2030 100%) !important;
+  border-color: var(--cyan) !important;
+  box-shadow: 0 4px 0 #060e17, 0 0 20px rgba(56, 189, 248, 0.4) !important;
+  color: #fff !important;
+  filter: brightness(1.1);
+}
+
 .btn-chain-accent {
-  background: linear-gradient(180deg, #183329 0%, #10211a 100%) !important;
-  border-color: rgba(45, 212, 191, 0.4) !important;
+  background: linear-gradient(180deg, #142e26 0%, #0c1c17 100%) !important;
+  border: 1.5px solid rgba(45, 212, 191, 0.45) !important;
   color: var(--green) !important;
+  box-shadow: 0 4px 0 #060e0c, 0 6px 14px rgba(0, 0, 0, 0.5) !important;
+  text-shadow: 0 0 10px rgba(45, 212, 191, 0.45);
+  transition: all 0.2s ease !important;
 }
 
 .btn-chain-accent:hover {
+  background: linear-gradient(180deg, #1a3d32 0%, #10251f 100%) !important;
   border-color: var(--green) !important;
-  box-shadow: 0 0 14px rgba(45, 212, 191, 0.3) !important;
+  box-shadow: 0 4px 0 #060e0c, 0 0 20px rgba(45, 212, 191, 0.4) !important;
+  color: #fff !important;
+  filter: brightness(1.1);
 }
 
 /* Історія сесій */
@@ -781,7 +804,7 @@
 }
 .footer-reset:hover { color: var(--red); }
 
-/* --- ГРА ЛАНЦЮГ СЛІВ --- */
+/* --- ГРА ЛАНЦЮГ СЛІВ (ІНТЕРАКТИВНІ КЛІТИНКИ) --- */
 .chain-game-wrapper {
   position: relative;
   z-index: 20;
@@ -792,7 +815,7 @@
 .chain-panel {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
 .chain-header {
@@ -853,6 +876,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-height: 54px;
   transition: all 0.2s ease;
 }
 
@@ -870,6 +894,7 @@
   border-color: var(--accent);
   background: rgba(245, 158, 11, 0.08);
   box-shadow: 0 0 16px rgba(245, 158, 11, 0.15);
+  padding: 8px 14px;
 }
 
 .chain-node-text {
@@ -878,10 +903,6 @@
   font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
-}
-
-.chain-node.locked-hidden .chain-node-text {
-  color: var(--text-dim);
 }
 
 .chain-node-badge {
@@ -902,21 +923,85 @@
   color: var(--accent);
 }
 
-.chain-input-block {
+/* Клітинки літер (Відкриті, закриті та інтерактивні інпути) */
+.chain-cells-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.chain-cell {
+  width: 32px;
+  height: 38px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+/* 1. Відкрита підказкою літера */
+.chain-cell.open-letter {
+  border: 1.5px solid var(--green);
+  background: rgba(45, 212, 191, 0.15);
+  color: var(--green);
+  box-shadow: 0 0 8px rgba(45, 212, 191, 0.25);
+}
+
+/* 2. Інтерактивна клітинка для введення */
+.chain-cell-input {
+  width: 32px;
+  height: 38px;
+  border-radius: 6px;
+  background: #141722;
+  border: 1.5px solid var(--accent);
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  outline: none;
+  padding: 0;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.2);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.chain-cell-input:focus {
+  border-color: #fbbf24;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+  transform: scale(1.05);
+  background: #1b2030;
+}
+
+/* 3. Закрита клітинка на майбутніх ланках */
+.chain-cell.locked-cell {
+  border: 1px solid rgba(100, 116, 139, 0.35);
+  background: rgba(20, 23, 34, 0.45);
+}
+
+/* Нижня інформаційна плашка */
+.chain-hint-bar {
   background: #090b10;
   border: 1px solid var(--plate-border);
-  border-radius: 10px;
-  padding: 16px;
+  border-radius: 8px;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .chain-hint-info {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-family: var(--mono);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
   color: var(--text-dim);
 }
 
@@ -930,46 +1015,9 @@
   font-weight: 600;
 }
 
-.chain-input-row {
-  display: grid;
-  grid-template-columns: 1fr 140px;
-  gap: 10px;
-}
-
-.chain-letter-slots {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: center;
-  padding-top: 4px;
-}
-
-.chain-slot {
-  width: 32px;
-  height: 38px;
-  background: #141722;
-  border: 1px solid var(--plate-border);
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--mono);
-  font-size: 1.1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #fff;
-  transition: all 0.2s ease;
-}
-
-.chain-slot.open {
-  border-color: var(--cyan);
-  color: var(--cyan);
-  background: rgba(56, 189, 248, 0.1);
-}
-
 .chain-feedback {
   font-family: var(--mono);
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   text-align: center;
   min-height: 20px;
   font-weight: 600;
@@ -979,7 +1027,7 @@
 .chain-feedback.success { color: var(--green); }
 
 .chain-finish-controls {
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 /* МОДАЛЬНЕ ВІКНО */
@@ -1057,5 +1105,5 @@
   .machine-wrapper, .machine-wrapper.solo-mode { grid-template-columns: 1fr; }
   .tape-list { height: 220px; }
   .hub-grid { grid-template-columns: 1fr; }
-  .chain-input-row { grid-template-columns: 1fr; }
+  .chain-cell, .chain-cell-input { width: 26px; height: 32px; font-size: 0.95rem; }
 }

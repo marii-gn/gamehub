@@ -12,10 +12,10 @@ class App {
     this.view = new GameView();
 
     this.bg = new BackgroundAnimation("wordCloud", CLOUD_WORDS, (word) => {
-      const inputEl = document.getElementById("wordInput");
-      if (inputEl) {
-        inputEl.value = word;
-        inputEl.focus();
+      const catInput = document.getElementById("wordInput");
+      if (catInput && !this.view.elements.categoriesScreen.classList.contains("hidden")) {
+        catInput.value = word;
+        catInput.focus();
       }
     });
   }
@@ -59,7 +59,6 @@ class App {
     this.view.showScreen("chain");
     this.chainEngine.startNewGame();
     this.view.renderChainBoard(this.chainEngine);
-    this.view.clearChainInput();
   }
 
   syncCategoriesUI() {
@@ -89,26 +88,26 @@ class App {
   }
 
   initDragAndDrop() {
-    const input = document.getElementById("wordInput");
-    if (!input) return;
+    const handleDropOnInput = (input) => {
+      if (!input) return;
+      input.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+        input.classList.add("drag-over");
+      });
+      input.addEventListener("dragleave", () => input.classList.remove("drag-over"));
+      input.addEventListener("drop", (e) => {
+        e.preventDefault();
+        input.classList.remove("drag-over");
+        const word = e.dataTransfer.getData("text/plain");
+        if (word) {
+          input.value = word;
+          input.focus();
+        }
+      });
+    };
 
-    input.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "copy";
-      input.classList.add("drag-over");
-    });
-
-    input.addEventListener("dragleave", () => input.classList.remove("drag-over"));
-
-    input.addEventListener("drop", (e) => {
-      e.preventDefault();
-      input.classList.remove("drag-over");
-      const word = e.dataTransfer.getData("text/plain");
-      if (word) {
-        input.value = word;
-        input.focus();
-      }
-    });
+    handleDropOnInput(document.getElementById("wordInput"));
   }
 
   // --- ТАЄМНІ КАТЕГОРІЇ ---
@@ -227,12 +226,14 @@ class App {
 
       this.view.showModal(
         isWin,
-        this.catEngine.p2Category.text,
+        isWin ? this.catEngine.p2Category.text : null,
         () => {
           if (isWin) this.openCategories();
         },
         isWin ? "Перемога!" : "Спробуй ще!",
-        isWin ? `Гравець ${StorageService.getUserName()} розгадав категорію!` : "Умова не розгадана. Продовжуйте пошук!"
+        isWin 
+          ? `Гравець ${StorageService.getUserName()} розгадав категорію!` 
+          : "Умова не розгадана. Продовжуйте пошук слів!"
       );
       if (guessInput) guessInput.value = "";
     };
@@ -264,53 +265,90 @@ class App {
     });
   }
 
-  // --- ЛАНЦЮГ СЛІВ ---
+  // --- ЛАНЦЮГ СЛІВ (ВВЕДЕННЯ БЕЗПОСЕРЕДНЬО В КЛІТИНКИ) ---
   bindChainEvents() {
-    const handleChainSubmit = () => {
-      const inputEl = document.getElementById("chainWordInput");
-      const text = inputEl ? inputEl.value.trim() : "";
-      if (!text) return;
+    const track = this.view.elements.chainTrack;
+    if (!track) return;
 
-      const result = this.chainEngine.guessWord(text);
-
-      if (result.status === "correct") {
-        this.view.setChainFeedback(`Чудово! Слово відгадано (+${result.earned} б.)`, false);
-      } else if (result.status === "wrong") {
-        this.view.setChainFeedback("Не те слово! Відкрито наступну літеру.", true);
-      } else if (result.status === "auto_opened") {
-        this.view.setChainFeedback("Літери закінчилися! Слово зараховано як 0 б.", true);
-      } else if (result.status === "game_complete") {
-        const finalScore = result.totalScore;
-        StorageService.recordChainResult(finalScore);
-
-        this.view.showModal(
-          true,
-          `Рахунок: ${finalScore} / 100 б.`,
-          () => {},
-          "Ланцюг Завершено!",
-          `Вітаємо, ${StorageService.getUserName()}! Ви успішно закрили весь ланцюг.`
-        );
+    // 1. Автоматичний перехід на наступну клітинку при вводі
+    track.addEventListener("input", (e) => {
+      if (e.target && e.target.classList.contains("chain-cell-input")) {
+        const input = e.target;
+        if (input.value.length === 1) {
+          const next = input.nextElementSibling;
+          if (next && next.classList.contains("chain-cell-input")) {
+            next.focus();
+            next.select();
+          }
+        }
       }
-
-      this.view.renderChainBoard(this.chainEngine);
-      this.view.clearChainInput();
-    };
-
-    document.getElementById("chainBtnSubmit")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      handleChainSubmit();
     });
 
-    document.getElementById("chainWordInput")?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        handleChainSubmit();
+    // 2. Клавіші Backspace та Enter
+    track.addEventListener("keydown", (e) => {
+      if (e.target && e.target.classList.contains("chain-cell-input")) {
+        const input = e.target;
+
+        if (e.key === "Backspace") {
+          if (input.value === "") {
+            const prev = input.previousElementSibling;
+            if (prev && prev.classList.contains("chain-cell-input")) {
+              prev.focus();
+              prev.value = "";
+              e.preventDefault();
+            }
+          }
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          this.submitChainWordFromCells();
+        }
       }
     });
 
     document.getElementById("btnNextChain")?.addEventListener("click", () => {
       this.openChain();
     });
+  }
+
+  // Збирання літер із відкритих плашок і введених клітинок
+  submitChainWordFromCells() {
+    const row = document.getElementById("activeCellsRow");
+    if (!row) return;
+
+    let fullWord = "";
+    Array.from(row.children).forEach((child) => {
+      if (child.classList.contains("open-letter")) {
+        fullWord += child.textContent.trim();
+      } else if (child.classList.contains("chain-cell-input")) {
+        fullWord += (child.value || "").trim();
+      }
+    });
+
+    fullWord = fullWord.toLowerCase();
+    if (!fullWord) return;
+
+    const result = this.chainEngine.guessWord(fullWord);
+
+    if (result.status === "correct") {
+      this.view.setChainFeedback(`Чудово! Слово відгадано (+${result.earned} б.)`, false);
+    } else if (result.status === "wrong") {
+      this.view.setChainFeedback("Не те слово! Відкрито наступну літеру.", true);
+    } else if (result.status === "auto_opened") {
+      this.view.setChainFeedback("Літери закінчилися! Слово зараховано як 0 б.", true);
+    } else if (result.status === "game_complete") {
+      const finalScore = result.totalScore;
+      StorageService.recordChainResult(finalScore);
+
+      this.view.showModal(
+        true,
+        `Рахунок: ${finalScore} / 100 б.`,
+        () => {},
+        "ти розумничок, закрив ланцюжок",
+        `Вітаємо, ${StorageService.getUserName()}! Всі словосполучення складено ідеально.`
+      );
+    }
+
+    this.view.renderChainBoard(this.chainEngine);
   }
 }
 
