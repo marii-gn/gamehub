@@ -1,4 +1,4 @@
-/* --- ХМАРА СЛІВ (ФОН) --- */
+/* --- ХМАРА СЛІВ (ФОН ДЛЯ КАТЕГОРІЙ) --- */
 .word-cloud-bg {
   position: fixed;
   inset: 0;
@@ -41,6 +41,16 @@
 @keyframes floatWord {
   from { transform: translateY(105vh); }
   to { transform: translateY(-15vh); }
+}
+
+/* --- СУЗІР'Я-ЛАНЦЮГИ (ФОН ДЛЯ ЛАНЦЮГА СЛІВ) --- */
+.constellation-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  width: 100vw;
+  height: 100vh;
 }
 
 /* --- ВЕРХНЯ НАВІГАЦІЙНА ПАНЕЛЬ --- */
@@ -288,6 +298,7 @@
   width: 100%;
 }
 
+/* Стилізація кнопок хабу */
 .btn-categories-accent {
   background: linear-gradient(180deg, #132738 0%, #0c1824 100%) !important;
   border: 1.5px solid rgba(56, 189, 248, 0.45) !important;
@@ -923,7 +934,7 @@
   color: var(--accent);
 }
 
-/* Клітинки літер (Відкриті, закриті та інтерактивні інпути) */
+/* Клітинки літер */
 .chain-cells-row {
   display: flex;
   gap: 6px;
@@ -945,7 +956,6 @@
   user-select: none;
 }
 
-/* 1. Відкрита підказкою літера */
 .chain-cell.open-letter {
   border: 1.5px solid var(--green);
   background: rgba(45, 212, 191, 0.15);
@@ -953,7 +963,6 @@
   box-shadow: 0 0 8px rgba(45, 212, 191, 0.25);
 }
 
-/* 2. Інтерактивна клітинка для введення */
 .chain-cell-input {
   width: 32px;
   height: 38px;
@@ -979,7 +988,6 @@
   background: #1b2030;
 }
 
-/* 3. Закрита клітинка на майбутніх ланках */
 .chain-cell.locked-cell {
   border: 1px solid rgba(100, 116, 139, 0.35);
   background: rgba(20, 23, 34, 0.45);

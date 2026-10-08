@@ -4,6 +4,7 @@ import { ChainEngine } from "./services/chain-engine.js";
 import { StorageService } from "./services/storage.js";
 import { GameView } from "./ui/view.js";
 import { BackgroundAnimation } from "./ui/background.js";
+import { ConstellationAnimation } from "./ui/constellation.js";
 
 class App {
   constructor() {
@@ -11,17 +12,20 @@ class App {
     this.chainEngine = new ChainEngine();
     this.view = new GameView();
 
-    this.bg = new BackgroundAnimation("wordCloud", CLOUD_WORDS, (word) => {
+    this.bgCloud = new BackgroundAnimation("wordCloud", CLOUD_WORDS, (word) => {
       const catInput = document.getElementById("wordInput");
       if (catInput && !this.view.elements.categoriesScreen.classList.contains("hidden")) {
         catInput.value = word;
         catInput.focus();
       }
     });
+
+    this.bgConstellation = new ConstellationAnimation("constellationBg");
   }
 
   init() {
-    this.bg.init();
+    this.bgCloud.init();
+    this.bgConstellation.init();
     this.initUserSession();
     this.initDragAndDrop();
     this.bindNavigationEvents();
@@ -42,12 +46,14 @@ class App {
   }
 
   openHub() {
+    this.bgConstellation.stop();
     this.view.showScreen("hub");
     const stats = StorageService.getStats();
     this.view.renderHubStats(stats);
   }
 
   openCategories() {
+    this.bgConstellation.stop();
     this.view.showScreen("categories");
     this.catEngine.startNewGame();
     this.syncCategoriesUI();
@@ -57,6 +63,7 @@ class App {
 
   openChain() {
     this.view.showScreen("chain");
+    this.bgConstellation.start();
     this.chainEngine.startNewGame();
     this.view.renderChainBoard(this.chainEngine);
   }
@@ -265,12 +272,12 @@ class App {
     });
   }
 
-  // --- ЛАНЦЮГ СЛІВ (ВВЕДЕННЯ БЕЗПОСЕРЕДНЬО В КЛІТИНКИ) ---
+  // --- ЛАНЦЮГ СЛІВ (ІНТЕРАКТИВНІ КЛІТИНКИ) ---
   bindChainEvents() {
     const track = this.view.elements.chainTrack;
     if (!track) return;
 
-    // 1. Автоматичний перехід на наступну клітинку при вводі
+    // 1. Автоперехід на наступну клітинку при вводі букви
     track.addEventListener("input", (e) => {
       if (e.target && e.target.classList.contains("chain-cell-input")) {
         const input = e.target;
@@ -310,7 +317,7 @@ class App {
     });
   }
 
-  // Збирання літер із відкритих плашок і введених клітинок
+  // Збирання літер з клітинок активного рядка
   submitChainWordFromCells() {
     const row = document.getElementById("activeCellsRow");
     if (!row) return;
