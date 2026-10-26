@@ -9,6 +9,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   
+  <!-- Бібліотека PeerJS для зв'язку 2-х пристроїв -->
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
   <link rel="stylesheet" href="styles/variables.css">
   <link rel="stylesheet" href="styles/base.css">
   <link rel="stylesheet" href="styles/components.css">
@@ -30,6 +33,7 @@
         <button class="nav-game-tab" data-game="chain">Ланцюг Слів</button>
         <button class="nav-game-tab" data-game="connections">Код Чотирьох</button>
         <button class="nav-game-tab" data-game="semantle">Тепліше-Холодніше</button>
+        <button class="nav-game-tab" data-game="wave">Одна Хвиля</button>
       </div>
     </div>
     
@@ -85,6 +89,16 @@
         <p class="hub-card-desc">Вводьте будь-які слова: система вимірює векторну близькість вашої здогадки до секретного слова українською.</p>
         <div class="hub-card-stats" id="statsSemantleCard"></div>
         <button class="physical-btn hub-play-btn btn-semantle-accent" id="btnPlaySemantle">Шукати Слово</button>
+      </article>
+
+      <!-- Картка 5: Одна Хвиля -->
+      <article class="hub-card" id="cardOneWave">
+        <div class="hub-card-indicator" style="--c: #e11d48;"></div>
+        <div class="hub-card-meta">2 Гравці • Кооператив • 2 Пристрої</div>
+        <h2 class="hub-card-title">Одна Хвиля </h2>
+        <p class="hub-card-desc">Об'єднайтеся з партнером з двох пристроїв! Пройдіть трек, синхронно вгадуючи слова, числа та контекст.</p>
+        <div class="hub-card-stats" id="statsWaveCard"></div>
+        <button class="physical-btn hub-play-btn btn-wave-accent" id="btnPlayWave">Увійти в Резонанс</button>
       </article>
     </div>
 
@@ -266,6 +280,64 @@
 
       <div class="semantle-finish-box hidden" id="semantleFinishBox">
         <button class="physical-btn btn-semantle-accent" id="btnNextSemantleWord">Загадати нове слово</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== ЕКРАН 6: ОДНА ХВИЛЯ ==================== -->
+  <main class="wave-game-wrapper hidden" id="waveScreen">
+    <section class="module-plate wave-panel">
+      <header class="wave-header">
+        <div>
+          <h2 class="wave-title">Одна Хвиля 🌊</h2>
+          <div class="wave-subtitle" id="waveRoomStatus">Підключення до мережі...</div>
+        </div>
+        <div class="wave-room-badge" id="waveRoomBadge">
+          <span class="wave-badge-label">КОД КІМНАТИ:</span>
+          <strong class="wave-badge-code" id="waveRoomCodeText">----</strong>
+        </div>
+      </header>
+
+      <!-- Екран підключення 2-х пристроїв -->
+      <div class="wave-lobby-box" id="waveLobbyBox">
+        <h3 class="wave-lobby-title">Кооперативне підключення</h3>
+        <p class="wave-lobby-desc">Для гри потрібні 2 пристрої. Один гравець створює кімнату, інший вводить її код.</p>
+        
+        <div class="wave-lobby-actions">
+          <button class="physical-btn btn-wave-accent" id="btnWaveCreateRoom">Створити кімнату (Host)</button>
+          <div class="wave-lobby-divider">— або —</div>
+          <div class="wave-join-group">
+            <input type="text" class="terminal-input wave-code-input" id="waveJoinCodeInput" placeholder="Код..." maxlength="10">
+            <button class="physical-btn" id="btnWaveJoinRoom">Приєднатися</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Основний ігровий простір (з'являється після підключення) -->
+      <div class="wave-gameplay-area hidden" id="waveGameplayArea">
+        <!-- Інтерактивна дошка (Трек з фішкою) -->
+        <div class="wave-board-container">
+          <div class="wave-board-track" id="waveBoardTrack"></div>
+        </div>
+
+        <!-- Картка завдання -->
+        <div class="wave-card-box" id="waveCardBox">
+          <div class="wave-card-category" id="waveCardCatTag">ЗБІГ СЛІВ 🗣️</div>
+          <div class="wave-type-instruction" id="waveTypeInstruction">Завантаження інструкції...</div>
+          <div class="wave-card-prompt" id="waveCardPrompt">Завантаження завдання...</div>
+          <div class="wave-card-subtext" id="waveCardSubtext">Введіть відповідь та натисніть «Синхронізувати»</div>
+        </div>
+
+        <!-- Поле введення відповіді -->
+        <div class="wave-input-cluster">
+          <input type="text" class="terminal-input wave-word-input" id="waveAnswerInput" placeholder="Ваша відповідь..." autocomplete="off">
+          <button class="physical-btn btn-wave-accent" id="btnWaveSubmitAnswer">Синхронізувати</button>
+        </div>
+
+        <!-- Статус партнера -->
+        <div class="wave-partner-status" id="wavePartnerStatus">
+          Очікування відповіді від партнера... ⏳
+        </div>
       </div>
     </section>
   </main>

@@ -4,6 +4,7 @@ import { GameEngine } from "./services/game-engine.js";
 import { ChainEngine } from "./services/chain-engine.js";
 import { ConnectionsEngine } from "./services/connections-engine.js";
 import { SemantleEngine } from "./services/semantle-engine.js";
+import { WaveEngine } from "./services/wave-engine.js";
 import { StorageService } from "./services/storage.js";
 import { GameView } from "./ui/view.js";
 import { BackgroundAnimation } from "./ui/background.js";
@@ -17,68 +18,91 @@ class App {
     this.chainEngine = new ChainEngine();
     this.connEngine = new ConnectionsEngine(CONNECTIONS_PUZZLES);
     this.semantleEngine = new SemantleEngine();
+    this.waveEngine = new WaveEngine();
     this.view = new GameView();
 
-    this.bgCloud = new BackgroundAnimation("wordCloud", CLOUD_WORDS, (word) => {
-      const catInput = document.getElementById("wordInput");
-      if (catInput && !this.view.elements.categoriesScreen?.classList.contains("hidden")) {
-        catInput.value = word;
-        catInput.focus();
-      }
-    });
+    try {
+      this.bgCloud = new BackgroundAnimation("wordCloud", CLOUD_WORDS, (word) => {
+        const catInput = document.getElementById("wordInput");
+        if (catInput && !this.view.elements.categoriesScreen?.classList.contains("hidden")) {
+          catInput.value = word;
+          catInput.focus();
+        }
+      });
+    } catch (e) {}
 
-    this.bgConstellation = new ConstellationAnimation("constellationBg");
-    this.bgCluster = new ClusterBgAnimation("clusterBg");
-    this.bgThermal = new ThermalBgAnimation("thermalBg");
+    try {
+      this.bgConstellation = new ConstellationAnimation("constellationBg");
+    } catch (e) {}
+
+    try {
+      this.bgCluster = new ClusterBgAnimation("clusterBg");
+    } catch (e) {}
+
+    try {
+      this.bgThermal = new ThermalBgAnimation("thermalBg");
+    } catch (e) {}
   }
 
   init() {
-    try {
-      this.bgCloud?.init();
-      this.bgConstellation?.init();
-      this.bgCluster?.init();
-      this.bgThermal?.init();
+    this.bindNavigationEvents();
+    this.bindCategoriesEvents();
+    this.bindChainEvents();
+    this.bindConnectionsEvents();
+    this.bindSemantleEvents();
+    this.bindWaveEvents();
+    this.initUserSession();
+    this.initDragAndDrop();
 
-      this.initUserSession();
-      this.initDragAndDrop();
-      this.bindNavigationEvents();
-      this.bindCategoriesEvents();
-      this.bindChainEvents();
-      this.bindConnectionsEvents();
-      this.bindSemantleEvents();
+    try { this.bgCloud?.init(); } catch (e) {}
+    try { this.bgConstellation?.init(); } catch (e) {}
+    try { this.bgCluster?.init(); } catch (e) {}
+    try { this.bgThermal?.init(); } catch (e) {}
 
-      this.openHub();
-    } catch (err) {
-      console.error("Помилка ініціалізації:", err);
-      document.getElementById("hubScreen")?.classList.remove("hidden");
-    }
+    this.openHub();
   }
 
   initUserSession() {
-    const savedName = StorageService.getUserName();
-    if (this.view.elements.userNameInput) {
-      this.view.elements.userNameInput.value = savedName;
-      this.view.elements.userNameInput.addEventListener("change", (e) => {
-        StorageService.setUserName(e.target.value);
-      });
-    }
+    try {
+      const savedName = StorageService.getUserName();
+      if (this.view.elements.userNameInput) {
+        this.view.elements.userNameInput.value = savedName;
+        this.view.elements.userNameInput.addEventListener("change", (e) => {
+          StorageService.setUserName(e.target.value);
+        });
+      }
+    } catch (e) {}
   }
 
   stopAllBackgrounds() {
-    this.bgConstellation?.stop();
-    this.bgThermal?.stop();
-    this.bgCluster?.setCubesMode(false);
+    try { this.bgConstellation?.stop(); } catch (e) {}
+    try { this.bgThermal?.stop(); } catch (e) {}
+    try { this.bgCluster?.setCubesMode(false); } catch (e) {}
+
+    // Ключове виправлення: слова, що літають, активні ЛИШЕ в Таємних Категоріях
+    const cloudEl = document.getElementById("wordCloud");
+    if (cloudEl) {
+      cloudEl.style.display = "none";
+    }
   }
 
   openHub() {
     this.stopAllBackgrounds();
     this.view.showScreen("hub");
-    const stats = StorageService.getStats();
-    this.view.renderHubStats(stats);
+    try {
+      const stats = StorageService.getStats();
+      this.view.renderHubStats(stats);
+    } catch (e) {}
   }
 
   openCategories() {
     this.stopAllBackgrounds();
+    // Вмикаємо слова на тлі виключно для Таємних Категорій
+    const cloudEl = document.getElementById("wordCloud");
+    if (cloudEl) {
+      cloudEl.style.display = "block";
+    }
+
     this.view.showScreen("categories");
     this.catEngine.startNewGame();
     this.syncCategoriesUI();
@@ -89,14 +113,14 @@ class App {
   openChain() {
     this.stopAllBackgrounds();
     this.view.showScreen("chain");
-    this.bgConstellation?.start();
+    try { this.bgConstellation?.start(); } catch (e) {}
     this.chainEngine.startNewGame();
     this.view.renderChainBoard(this.chainEngine);
   }
 
   openConnections() {
     this.stopAllBackgrounds();
-    this.bgCluster?.setCubesMode(true);
+    try { this.bgCluster?.setCubesMode(true); } catch (e) {}
     this.view.showScreen("connections");
     this.connEngine.startNewGame();
     this.view.hideConnHint();
@@ -105,14 +129,19 @@ class App {
 
   openSemantle() {
     this.stopAllBackgrounds();
-    this.bgThermal?.start();
     this.view.showScreen("semantle");
+    try { this.bgThermal?.start(); } catch (e) {}
     this.semantleEngine.startNewGame();
     this.view.renderSemantleBoard(this.semantleEngine);
     if (this.view.elements.semantleWordInput) {
       this.view.elements.semantleWordInput.value = "";
       this.view.elements.semantleWordInput.focus();
     }
+  }
+
+  openWave() {
+    this.stopAllBackgrounds();
+    this.view.showScreen("wave");
   }
 
   syncCategoriesUI() {
@@ -135,13 +164,30 @@ class App {
         else if (game === "chain") this.openChain();
         else if (game === "connections") this.openConnections();
         else if (game === "semantle") this.openSemantle();
+        else if (game === "wave") this.openWave();
       });
     });
 
-    document.getElementById("btnPlayCategories")?.addEventListener("click", () => this.openCategories());
-    document.getElementById("btnPlayChain")?.addEventListener("click", () => this.openChain());
-    document.getElementById("btnPlayConnections")?.addEventListener("click", () => this.openConnections());
-    document.getElementById("btnPlaySemantle")?.addEventListener("click", () => this.openSemantle());
+    document.getElementById("btnPlayCategories")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.openCategories();
+    });
+    document.getElementById("btnPlayChain")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.openChain();
+    });
+    document.getElementById("btnPlayConnections")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.openConnections();
+    });
+    document.getElementById("btnPlaySemantle")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.openSemantle();
+    });
+    document.getElementById("btnPlayWave")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.openWave();
+    });
   }
 
   initDragAndDrop() {
@@ -277,7 +323,7 @@ class App {
         },
         isWin ? "ти молодець, а бот тупий" : "Спробуй ще!",
         isWin
-          ? `Гравець ${StorageService.getUserName()} блискуче розгадав категорію!`
+          ? `Гравець ${StorageService.getUserName()} розгадав категорію!`
           : "Умова не розгадана. Продовжуйте пошук слів!"
       );
       if (guessInput) guessInput.value = "";
@@ -549,6 +595,111 @@ class App {
     this.view.elements.btnNextSemantleWord?.addEventListener("click", () => {
       this.openSemantle();
     });
+  }
+
+  bindWaveEvents() {
+    const createBtn = document.getElementById("btnWaveCreateRoom");
+    const joinBtn = document.getElementById("btnWaveJoinRoom");
+    const submitBtn = document.getElementById("btnWaveSubmitAnswer");
+
+    createBtn?.addEventListener("click", () => {
+      this.waveEngine.createRoom((code) => {
+        document.getElementById("waveRoomCodeText").textContent = code;
+        document.getElementById("waveRoomStatus").textContent = "Очікування другого гравця...";
+      });
+    });
+
+    joinBtn?.addEventListener("click", () => {
+      const code = document.getElementById("waveJoinCodeInput").value.trim();
+      if (!code) return;
+      this.waveEngine.joinRoom(code, () => {
+        document.getElementById("waveRoomCodeText").textContent = code;
+        document.getElementById("waveRoomStatus").textContent = "Підключено до кімнати!";
+      });
+    });
+
+    submitBtn?.addEventListener("click", () => {
+      const input = document.getElementById("waveAnswerInput");
+      const val = input.value.trim();
+      if (!val) return;
+      this.waveEngine.submitMyAnswer(val);
+      input.value = "";
+      submitBtn.disabled = true;
+    });
+
+    document.getElementById("waveAnswerInput")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitBtn?.click();
+      }
+    });
+
+    this.waveEngine.onStateChange = (event, extra) => {
+      const lobby = document.getElementById("waveLobbyBox");
+      const area = document.getElementById("waveGameplayArea");
+      const partnerStatus = document.getElementById("wavePartnerStatus");
+
+      if (event === "connected") {
+        lobby.classList.add("hidden");
+        area.classList.remove("hidden");
+        document.getElementById("waveRoomStatus").textContent = "У РЕЗОНАНСІ ⚡";
+        this.renderWaveTrack(this.waveEngine.position);
+      }
+
+      if (event === "round_start") {
+        document.getElementById("btnWaveSubmitAnswer").disabled = false;
+        
+        const card = this.waveEngine.currentCard;
+        document.getElementById("waveCardCatTag").textContent = card.catName;
+        document.getElementById("waveTypeInstruction").textContent = card.typeInstruction || "Синхронізуйте відповідь із партнером!";
+        document.getElementById("waveCardPrompt").textContent = card.prompt;
+        document.getElementById("waveCardSubtext").textContent = card.hint ? `Підказка: ${card.hint}` : "";
+        
+        partnerStatus.textContent = "Партнер обмірковує відповідь... 💭";
+        this.renderWaveTrack(this.waveEngine.position);
+      }
+
+      if (event === "waiting_partner") {
+        partnerStatus.textContent = "Ви відповіли! Очікуємо партнера... ⏳";
+      }
+
+      if (event === "round_finished") {
+        this.renderWaveTrack(extra.newPos);
+        if (extra.isMatch) {
+          partnerStatus.textContent = `ЗБІГ! 🔥 Обоє відповіли: «${extra.myAns}». Крок уперед!`;
+        } else {
+          partnerStatus.textContent = `НЕЗБІГ! ❄️ Ви: «${extra.myAns}», Партнер: «${extra.partnerAns}». Відкат назад!`;
+        }
+      }
+    };
+  }
+
+  renderWaveTrack(pos) {
+    const track = document.getElementById("waveBoardTrack");
+    if (!track) return;
+    track.innerHTML = "";
+
+    for (let i = 0; i <= 10; i++) {
+      const cell = document.createElement("div");
+      cell.className = "wave-cell" + (i === 10 ? " finish-cell" : "");
+
+      // Розміщуємо номер або іконку фінішу
+      const label = document.createElement("span");
+      label.className = "wave-cell-num";
+      label.textContent = i === 10 ? "🏁" : i;
+      cell.appendChild(label);
+
+      // Якщо це активна позиція команди — малюємо сяючу фішку 
+      if (i === pos) {
+        cell.classList.add("occupied-cell");
+        const pin = document.createElement("div");
+        pin.className = "wave-team-pin";
+        pin.innerHTML = `<span>👥</span>`;
+        cell.appendChild(pin);
+      }
+
+      track.appendChild(cell);
+    }
   }
 }
 
