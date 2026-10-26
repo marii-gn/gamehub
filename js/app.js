@@ -603,27 +603,41 @@ class App {
     const submitBtn = document.getElementById("btnWaveSubmitAnswer");
 
     createBtn?.addEventListener("click", () => {
-      this.waveEngine.createRoom((code) => {
-        document.getElementById("waveRoomCodeText").textContent = code;
-        document.getElementById("waveRoomStatus").textContent = "Очікування другого гравця...";
-      });
+      document.getElementById("waveRoomStatus").textContent = "З'єднання з сервером PeerJS...";
+      this.waveEngine.createRoom(
+        (code) => {
+          document.getElementById("waveRoomCodeText").textContent = code;
+          document.getElementById("waveRoomStatus").textContent = "Очікування другого гравця...";
+        },
+        (err) => {
+          document.getElementById("waveRoomStatus").textContent = "Помилка мережі! Спробуйте ще раз.";
+        }
+      );
     });
 
     joinBtn?.addEventListener("click", () => {
       const code = document.getElementById("waveJoinCodeInput").value.trim();
       if (!code) return;
-      this.waveEngine.joinRoom(code, () => {
-        document.getElementById("waveRoomCodeText").textContent = code;
-        document.getElementById("waveRoomStatus").textContent = "Підключено до кімнати!";
-      });
+      document.getElementById("waveRoomStatus").textContent = `Підключення до кімнати ${code}...`;
+      
+      this.waveEngine.joinRoom(
+        code,
+        () => {
+          document.getElementById("waveRoomCodeText").textContent = code;
+          document.getElementById("waveRoomStatus").textContent = "Встановлення зв'язку з Host...";
+        },
+        (err) => {
+          document.getElementById("waveRoomStatus").textContent = "Кімнату не знайдено!";
+        }
+      );
     });
 
     submitBtn?.addEventListener("click", () => {
       const input = document.getElementById("waveAnswerInput");
-      const val = input.value.trim();
+      const val = input ? input.value.trim() : "";
       if (!val) return;
       this.waveEngine.submitMyAnswer(val);
-      input.value = "";
+      if (input) input.value = "";
       submitBtn.disabled = true;
     });
 
@@ -640,20 +654,31 @@ class App {
       const partnerStatus = document.getElementById("wavePartnerStatus");
 
       if (event === "connected") {
-        lobby.classList.add("hidden");
-        area.classList.remove("hidden");
+        lobby?.classList.add("hidden");
+        area?.classList.remove("hidden");
         document.getElementById("waveRoomStatus").textContent = "У РЕЗОНАНСІ ⚡";
         this.renderWaveTrack(this.waveEngine.position);
       }
 
+      if (event === "disconnected") {
+        partnerStatus.textContent = "Зв'язок з партнером втрачено! ❌";
+        document.getElementById("waveRoomStatus").textContent = "З'єднання розірвано";
+      }
+
       if (event === "round_start") {
-        document.getElementById("btnWaveSubmitAnswer").disabled = false;
+        lobby?.classList.add("hidden");
+        area?.classList.remove("hidden");
+        
+        const subBtn = document.getElementById("btnWaveSubmitAnswer");
+        if (subBtn) subBtn.disabled = false;
         
         const card = this.waveEngine.currentCard;
-        document.getElementById("waveCardCatTag").textContent = card.catName;
-        document.getElementById("waveTypeInstruction").textContent = card.typeInstruction || "Синхронізуйте відповідь із партнером!";
-        document.getElementById("waveCardPrompt").textContent = card.prompt;
-        document.getElementById("waveCardSubtext").textContent = card.hint ? `Підказка: ${card.hint}` : "";
+        if (card) {
+          document.getElementById("waveCardCatTag").textContent = card.catName;
+          document.getElementById("waveTypeInstruction").textContent = card.typeInstruction || "Синхронізуйте відповідь із партнером!";
+          document.getElementById("waveCardPrompt").textContent = card.prompt;
+          document.getElementById("waveCardSubtext").textContent = card.hint ? `Підказка: ${card.hint}` : "";
+        }
         
         partnerStatus.textContent = "Партнер обмірковує відповідь... 💭";
         this.renderWaveTrack(this.waveEngine.position);
